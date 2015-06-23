@@ -9,6 +9,11 @@ import java.net.URL;
 import android.util.Log;
 
 public class HttpUtil {
+	/**
+	 * 发送请求到服务器,
+	 * @param address  请求地址
+	 * @param listener  对返回结果进行处理的类
+	 */
 	public static void sendHttpRequest(final String address,final HttpCallbackListener listener){
 		new Thread(new Runnable() {
 			

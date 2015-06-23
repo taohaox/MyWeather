@@ -5,9 +5,9 @@ import java.util.List;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.widget.AdapterView;
@@ -106,6 +106,12 @@ public class ChooseAreaActivity extends Activity{
 				}else if(currentLevel == LEVEL_CITY){
 					selectedCity = cityList.get(position);
 					queryCounty();
+				}else if(currentLevel==LEVEL_COUNTY){
+					Intent intent = new Intent(ChooseAreaActivity.this,WeatherActivity.class);
+					String countycode =  countyList.get(position).getCountyCode();
+					intent.putExtra("countycode", countycode);
+					startActivity(intent);
+					finish();
 				}
 			}
 			
@@ -141,6 +147,7 @@ public class ChooseAreaActivity extends Activity{
 				datalist.add(c.getCityName());
 			}
 			adapter.notifyDataSetChanged();
+			title_text.setText(selectedProvince.getProvinceName());
 			listview.setSelection(0);
 			currentLevel = LEVEL_CITY;
 			title_text.setText(selectedProvince.getProvinceName());
@@ -158,6 +165,7 @@ public class ChooseAreaActivity extends Activity{
 			for(County c: countyList){
 				datalist.add(c.getCountyName());
 			}
+			title_text.setText(selectedCity.getCityName());
 			adapter.notifyDataSetChanged();
 			listview.setSelection(0);
 			currentLevel = LEVEL_COUNTY;
@@ -242,4 +250,20 @@ public class ChooseAreaActivity extends Activity{
 			progressdialog.dismiss();
 		}
 	}
+	/**
+	 * ¼àÌý·µ»Ø¼ü  ÖØÔØ
+	 */
+	@Override
+	public void onBackPressed() {
+		
+		if(currentLevel==LEVEL_CITY){
+			queryProvinces();
+		}else if(currentLevel==LEVEL_PROVINCE){
+			startActivity(new Intent(this,WeatherActivity.class));
+			finish();
+		}else if(currentLevel==LEVEL_COUNTY){
+			queryCities();
+		}
+	}
+	
 }
