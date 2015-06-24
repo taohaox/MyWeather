@@ -114,16 +114,7 @@ public class WeatherActivity extends Activity{
 			showWeatherInfo();
 		}else{
 			//update_time.setText("同步中...");
-			showProgressDialog();
-			queryWeatherBycountycode(countycode,"county");
-			try {
-				Thread.sleep(500);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			showWeatherInfo();
-			closeProgressDialog();
+			update_weather(countycode,"county");
 		}
 		initListener();
 		
@@ -137,6 +128,17 @@ public class WeatherActivity extends Activity{
 		};
 		Timer timer = new Timer();
 		timer.schedule(task, 1000);*/
+	}
+	public void update_weather(String countycode,String type){
+		
+		queryWeatherBycountycode(countycode,type);
+		try {
+			Thread.sleep(500);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		showWeatherInfo();
 	}
 	/**
 	 * 从本地获取 天气信息文件  得到的数据赋值到各个控件
@@ -294,8 +296,11 @@ public class WeatherActivity extends Activity{
 			
 			@Override
 			public void onClick(View v) {
-				update_time.setText("同步中...");
-				showWeatherInfo();
+				showProgressDialog();
+				Toast.makeText(WeatherActivity.this, "开始更新天气", 0).show();
+				SharedPreferences sp = WeatherActivity.this.getSharedPreferences(Utility.WEATHER_CONFIG_FILE, MODE_PRIVATE);
+				update_weather(sp.getString("weatherid", ""),"weather");
+				closeProgressDialog();
 			}
 		});
 		img_getdesc.setOnClickListener(new OnClickListener() {
