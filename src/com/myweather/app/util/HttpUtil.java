@@ -21,6 +21,7 @@ public class HttpUtil {
 			public void run() {
 				HttpURLConnection conn = null;
 				try {
+					System.out.println(address);
 					URL url = new URL(address);
 					conn = (HttpURLConnection) url.openConnection();
 					conn.setRequestMethod("GET");
@@ -34,7 +35,7 @@ public class HttpUtil {
 						sb.append(line);
 					}
 					if(listener!=null){
-						listener.onFinish(sb.toString());
+						listener.onFinish(sb.toString(), in);
 					}
 					System.out.println(sb.toString());
 					Log.e("AAA", sb.toString());

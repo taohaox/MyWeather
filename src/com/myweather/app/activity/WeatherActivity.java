@@ -1,30 +1,41 @@
 package com.myweather.app.activity;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Canvas;
+import android.graphics.ColorFilter;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
+import com.jeremyfeinstein.slidingmenu.lib.app.SlidingFragmentActivity;
 import com.myweather.app.R;
 import com.myweather.app.util.HttpCallbackListener;
 import com.myweather.app.util.HttpUtil;
+import com.myweather.app.util.URLEncoderUtil;
 import com.myweather.app.util.Utility;
 
-public class WeatherActivity extends Activity{
+public class WeatherActivity extends SlidingFragmentActivity{
+	private SlidingMenu menu;  
 	/**
 	 * 实时温度
 	 */
@@ -52,7 +63,7 @@ public class WeatherActivity extends Activity{
 	/**
 	 * 点击刷新
 	 */
-	private ImageView img_update;
+	private ProgressBar pb_update;
 	/**
 	 * 点击将天气信息发送给好友
 	 */
@@ -77,20 +88,23 @@ public class WeatherActivity extends Activity{
 	
 	private TextView today;
 	private TextView today_date;
-	private ImageView img_today;
+	private ImageView img_today1;
+	private ImageView img_today2;
 	private TextView temp;
 	
 	private TextView tomorrow;
 	private TextView tomorrow_date;
-	private ImageView img_tomorrow;
+	private ImageView img_tomorrow1;
+	private ImageView img_tomorrow2;
 	private TextView tomorrow_temp;
 	
 	private TextView after_tomorrow;
 	private TextView after_tomorrow_date;
-	private ImageView img_after_tomorrow;
+	private ImageView img_after_tomorrow1;
+	private ImageView img_after_tomorrow2;
 	private TextView after_tomorrow_temp;
 	
-	private TextView big_after_tomorrow;
+	/*private TextView big_after_tomorrow;
 	private TextView big_after_tomorrow_date;
 	private ImageView img_big_after_tomorrow;
 	private TextView big_after_tomorrow_temp;
@@ -98,79 +112,103 @@ public class WeatherActivity extends Activity{
 	private TextView real_big_after_tomorrow;
 	private TextView real_big_after_tomorrow_date;
 	private ImageView img_real_big_after_tomorrow;
-	private TextView real_big_after_tomorrow_temp;
+	private TextView real_big_after_tomorrow_temp;*/
 	
+	/**
+	 * 显示第几座城市的天气信息  默认为1
+	 */
+	private int position = 1;
 	
 	@Override
-	protected void onCreate(Bundle savedInstanceState) {
+	public void onCreate(Bundle savedInstanceState){
 		super.onCreate(savedInstanceState);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.weather_layout);
+		 //初始化滑动菜单  
+        initSlidingMenu();  
 		initView();
 		String countycode = getIntent().getStringExtra("countycode");
 		System.out.println("countycode:"+countycode);
 		if("".equals(countycode)||countycode==null){
-			//update_time.setText("同步中...");
-			showWeatherInfo();
+			showWeatherInfo(position);
 		}else{
-			//update_time.setText("同步中...");
 			update_weather(countycode,"county");
 		}
 		initListener();
-		
-		/*//设置为1秒后读取sp文件内容``   应为写入速度过慢.
-		TimerTask task = new TimerTask() {
-			
-			@Override
-			public void run() {
-				showWeatherInfo();
-			}
-		};
-		Timer timer = new Timer();
-		timer.schedule(task, 1000);*/
 	}
+	/** 
+     * 初始化滑动菜单 
+     */  
+    private void initSlidingMenu() {  
+    	// 设置滑动菜单的视图
+		setBehindContentView(R.layout.menu_frame);
+		getSupportFragmentManager().beginTransaction().replace(R.id.menu_frame, new ChooseAreaFragment()).commit();		
+
+		// 实例化滑动菜单对象
+		menu = getSlidingMenu();
+		// 设置滑动阴影的宽度
+		menu.setShadowWidthRes(R.dimen.shadow_width);
+		// 设置滑动阴影的图像资源
+		menu.setShadowDrawable(R.drawable.shadow);
+		// 设置滑动菜单视图的宽度
+		menu.setBehindOffsetRes(R.dimen.slidingmenu_offset);
+		// 设置渐入渐出效果的值
+		menu.setFadeDegree(0.7f);
+		// 设置触摸屏幕的模式
+		menu.setTouchModeAbove(SlidingMenu.TOUCHMODE_FULLSCREEN);		
+    }  
+      
+    @Override  
+    public void onBackPressed() {  
+        //点击返回键关闭滑动菜单  
+        if (menu.isMenuShowing()) {  
+            menu.showContent();  
+        } else {  
+            super.onBackPressed();  
+        }  
+    }  
 	public void update_weather(String countycode,String type){
-		
+		update_time.setText("同步中...");
 		queryWeatherBycountycode(countycode,type);
-		try {
-			Thread.sleep(500);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		showWeatherInfo();
 	}
 	/**
 	 * 从本地获取 天气信息文件  得到的数据赋值到各个控件
 	 */
-	private void showWeatherInfo() {
-		SharedPreferences sp = getSharedPreferences(Utility.WEATHER_CONFIG_FILE, MODE_PRIVATE);
-		String weatherid = sp.getString("weatherid", "");
-		if(weatherid.equals("")){
+	private void showWeatherInfo(int position) {
+		SharedPreferences sp = getSharedPreferences(Utility.CITY_CONFIG+position, MODE_PRIVATE);
+		String c1 = sp.getString("c1", "");
+		if(c1.equals("")){
 			AlertDialog.Builder builder = new Builder(this);
 			builder.setTitle("提示");
 			builder.setMessage("由于手机定位功能尚未开发,所以需要您自己指定您所在的城市,为您带来的不便,我深感抱歉!");
 			builder.setNegativeButton("OK", new DialogInterface.OnClickListener() {
-				
 				@Override
 				public void onClick(DialogInterface dialog, int which) {
-					startActivity(new Intent(WeatherActivity.this,ChooseAreaActivity.class));
-					WeatherActivity.this.finish();
+					
+					menu.showContextMenu();
 				}
 			}
 			);
 			builder.show();
 		}else{
-			String city_name = sp.getString("city_name", "");
-			String temp1 = sp.getString("temp1", "");
-			String weather1 = sp.getString("weather1", "");
-			String current_date = sp.getString("current_date", "");
-			temp_desc.setText(weather1);
-			temp_range.setText(temp1);
-			week_today.setText(Utility.getTodayOfWeek(new Date()));
-			update_time.setText(Utility.getUpdate_time(current_date));
+			String city_name = sp.getString("c3", "");
 			address.setText(city_name);
-			real_time_temp.setText((Integer.parseInt(temp1.substring(0, temp1.indexOf("~")-1))-3)+"");
+			
+			
+			//需要从实时天气接口中读取
+			sp = getSharedPreferences(Utility.REAL_WEATHER_CONFIG+position, MODE_PRIVATE);
+			String temp1 = sp.getString("temp1", "");  //温度a
+			String temp2 = sp.getString("temp2", "");  //温度b
+			String temNow = sp.getString("temNow", "");  //描述
+			String stateDetailed = sp.getString("stateDetailed", "");
+			String current_time = sp.getString("current_time", "");
+			
+			temp_desc.setText(stateDetailed);
+			temp_range.setText(temp2+"/"+temp1+"°C");
+			week_today.setText(Utility.getTodayOfWeek(new Date()));
+			update_time.setText(Utility.getUpdate_time(current_time));
+			real_time_temp.setText(temNow);
+			
 			SimpleDateFormat sf = new SimpleDateFormat("M月dd日");
 			Date date = new Date();
 			int day = date.getDay();
@@ -178,65 +216,40 @@ public class WeatherActivity extends Activity{
 			Calendar c = Calendar.getInstance();
 			c.setTime(new Date());
 			
+			
+			//拿到该城市未来三天的天气信息
+			sp = getSharedPreferences(Utility.WEATHER_CONFIG+position, MODE_PRIVATE);
 			//当天
 			today.setText("今天");
 			today_date.setText(sf.format(new Date()));
-			int id1 = Integer.parseInt(sp.getString("img1", ""));
-			if(id1>33){
-				id1=0;
-			}
-			String img1 = "d"+id1;
-			img_today.setImageResource(Utility.getImage(img1));
-			temp.setText(sp.getString("temp1", ""));
+			String img1 = "d"+sp.getString("fa1", "");
+			String img2 = "n"+sp.getString("fb1", "");
+			
+			
+			img_today1.setImageResource(Utility.getImage(img1));
+			img_today2.setImageResource(Utility.getImage(img2));
+			temp.setText(temp2+"~"+temp1+"°C");
 			
 			//第二天
 			c.add(Calendar.DATE, 1);
 			tomorrow.setText(Utility.getTodayOfWeek(c.getTime()));
 			tomorrow_date.setText(sf.format(c.getTime()));
-			int id2 = Integer.parseInt(sp.getString("img3", ""));
-			if(id2>33){
-				id2=0;
-			}
-			String img2 = "d"+id2;
-			img_tomorrow.setImageResource(Utility.getImage(img2));
-			tomorrow_temp.setText(sp.getString("temp2", ""));
+			
+			String img3 = "d"+sp.getString("fa2", "");
+			String img4 = "n"+sp.getString("fb2", "");
+			img_tomorrow1.setImageResource(Utility.getImage(img3));
+			img_tomorrow2.setImageResource(Utility.getImage(img4));
+			tomorrow_temp.setText(sp.getString("fd2", "")+"~"+sp.getString("fc2", "")+"°C");
 			
 			//第三天
 			c.add(Calendar.DATE, 1);
 			after_tomorrow.setText(Utility.getTodayOfWeek(c.getTime()));
 			after_tomorrow_date.setText(sf.format(c.getTime()));
-			int id3 = Integer.parseInt(sp.getString("img5", ""));
-			if(id3>33){
-				id3=0;
-			}
-			String img3 = "d"+id3;
-			img_after_tomorrow.setImageResource(Utility.getImage(img3));
-			after_tomorrow_temp.setText(sp.getString("temp3", ""));
-			
-			//第四天
-			c.add(Calendar.DATE, 1);
-			big_after_tomorrow.setText(Utility.getTodayOfWeek(c.getTime()));
-			big_after_tomorrow_date.setText(sf.format(c.getTime()));
-			int id4 = Integer.parseInt(sp.getString("img7", ""));
-			if(id4>33){
-				id4=0;
-			}
-			String img4 = "d"+id4;
-			img_big_after_tomorrow.setImageResource(Utility.getImage(img4));
-			big_after_tomorrow_temp.setText(sp.getString("temp4", ""));
-			
-			//第五天
-			c.add(Calendar.DATE, 1);
-			real_big_after_tomorrow.setText(Utility.getTodayOfWeek(c.getTime()));
-			real_big_after_tomorrow_date.setText(sf.format(c.getTime()));
-			int id5 = Integer.parseInt(sp.getString("img9", ""));
-			if(id5>33){
-				id5=0;
-			}
-			String img5 = "d"+id5;
-			img_real_big_after_tomorrow.setImageResource(Utility.getImage(img5));
-			real_big_after_tomorrow_temp.setText(sp.getString("temp5", ""));
-			
+			String img5 = "d"+sp.getString("fa3", "");
+			String img6 = "n"+sp.getString("fb3", "");
+			img_after_tomorrow1.setImageResource(Utility.getImage(img5));
+			img_after_tomorrow2.setImageResource(Utility.getImage(img6));
+			after_tomorrow_temp.setText(sp.getString("fd3", "")+"~"+sp.getString("fc3", "")+"°C");
 		}
 	}
 	/**
@@ -251,13 +264,13 @@ public class WeatherActivity extends Activity{
 		//获取灰常详细的天气信息  
 		//http://m.weather.com.cn/atad/101010100.html
 		if("county".equals(type)){
+			update_time.setText("同步中...");
 			String address = "http://www.weather.com.cn/data/list3/city"+code+".xml";
 			HttpUtil.sendHttpRequest(address,new HttpCallbackListener() {
 				
 				@Override
-				public void onFinish(String response) {
+				public void onFinish(String response,InputStream in) {
 					String strs[] = response.split("\\|");
-					
 					queryWeatherBycountycode(strs[1],"weather");
 				}
 				
@@ -269,17 +282,25 @@ public class WeatherActivity extends Activity{
 			});
 		}else if("weather".equals(type)){
 			//String address = "http://www.weather.com.cn/data/cityinfo/"+code+".html";
-			String address = "http://m.weather.com.cn/atad/"+code+".html";
-			HttpUtil.sendHttpRequest(address,new HttpCallbackListener() {
+			//String address = "http://m.weather.com.cn/atad/"+code+".html";
+			HttpUtil.sendHttpRequest(URLEncoderUtil.getUrlEncoder(code, URLEncoderUtil.FORECAST_V),new HttpCallbackListener() {
 				
 				@Override
-				public void onFinish(String response) {
-					Utility.handleWeatherResponse(WeatherActivity.this, response);
+				public void onFinish(String response,InputStream in) {
+					Utility.handleWeatherResponse(WeatherActivity.this, response,position);
+					runOnUiThread(new Runnable() {
+						
+						@Override
+						public void run() {
+							//必须等 未来信息更新完成才能更新实时天气
+							update_real_weather(position);
+						}
+					});
 				}
 				
 				@Override
 				public void onError(Exception e) {
-					Toast.makeText(WeatherActivity.this, e.getMessage(), 0).show();
+					//Toast.makeText(WeatherActivity.this, e.getMessage(), 0).show();
 					e.printStackTrace();
 				}
 			});
@@ -287,20 +308,52 @@ public class WeatherActivity extends Activity{
 		
 		
 	}
-	
+	public void update_real_weather(final int position){
+		SharedPreferences sp = getSharedPreferences(Utility.CITY_CONFIG+position, MODE_PRIVATE);
+		final String url = sp.getString("c1", ""); //c1为天气编号   是即将返回的xml中的url属性
+		String code = sp.getString("c4", "");
+		String httpaddr = "http://flash.weather.com.cn/wmaps/xml/"+code+".xml";
+		HttpUtil.sendHttpRequest(httpaddr, new HttpCallbackListener() {
+			
+			@Override
+			public void onFinish(String response,InputStream in) {
+				File file = new File(getApplication().getFilesDir(),"xml");
+				try {
+					BufferedWriter bf = new BufferedWriter(new FileWriter(file));
+					response = "<?xml version=\"1.0\" ?>"+response;
+					bf.write(response);
+					bf.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				} 
+				Utility.handleRealWeather(WeatherActivity.this,url,position,file);
+				runOnUiThread(new Runnable() {
+					
+					@Override
+					public void run() {
+						showWeatherInfo(position);
+					}
+				});
+			}
+			
+			@Override
+			public void onError(Exception e) {
+				e.printStackTrace();
+			}
+		});
+	}
 	/**
 	 * 初始化各种监听事件
 	 */
 	private void initListener() {
-		img_update.setOnClickListener(new OnClickListener() {
+		pb_update.setOnClickListener(new OnClickListener() {
 			
 			@Override
 			public void onClick(View v) {
-				showProgressDialog();
-				Toast.makeText(WeatherActivity.this, "开始更新天气", 0).show();
-				SharedPreferences sp = WeatherActivity.this.getSharedPreferences(Utility.WEATHER_CONFIG_FILE, MODE_PRIVATE);
-				update_weather(sp.getString("weatherid", ""),"weather");
-				closeProgressDialog();
+				pb_update.setProgress(0);
+				//Toast.makeText(WeatherActivity.this, "开始更新天气", 0).show();
+				SharedPreferences sp = WeatherActivity.this.getSharedPreferences(Utility.CITY_CONFIG+position, MODE_PRIVATE);
+				update_weather(sp.getString("c1", ""),"weather");
 			}
 		});
 		img_getdesc.setOnClickListener(new OnClickListener() {
@@ -315,9 +368,10 @@ public class WeatherActivity extends Activity{
 			
 			@Override
 			public void onClick(View v) {
-				Intent intent = new Intent(WeatherActivity.this,ChooseAreaActivity.class);
-				startActivity(intent);
-				finish();
+				//Intent intent = new Intent(WeatherActivity.this,ChooseAreaActivity.class);
+				//startActivity(intent);
+				//finish();
+				menu.showContextMenu();
 			}
 		});
 		img_sendmsg.setOnClickListener(new OnClickListener() {
@@ -338,7 +392,7 @@ public class WeatherActivity extends Activity{
 		img_sendmsg = (ImageView) findViewById(R.id.img_sendmsg);
 		img_listcity = (ImageView) findViewById(R.id.img_listcity);
 		img_getdesc = (ImageView) findViewById(R.id.img_getdesc);
-		img_update = (ImageView) findViewById(R.id.img_update);
+		pb_update = (ProgressBar) findViewById(R.id.pb_update);
 		
 		real_time_temp = (TextView) findViewById(R.id.real_time_temp);
 		temp_range = (TextView) findViewById(R.id.temp_range);
@@ -350,20 +404,23 @@ public class WeatherActivity extends Activity{
 		
 		today = (TextView) findViewById(R.id.today);
 		today_date = (TextView) findViewById(R.id.today_date);
-		img_today = (ImageView) findViewById(R.id.img_today);
+		img_today1 = (ImageView) findViewById(R.id.img_today1);
+		img_today2 = (ImageView) findViewById(R.id.img_today2);
 		temp = (TextView) findViewById(R.id.temp);
 		
 		tomorrow = (TextView) findViewById(R.id.tomorrow);
 		tomorrow_date = (TextView) findViewById(R.id.tomorrow_date);
-		img_tomorrow = (ImageView) findViewById(R.id.img_tomorrow);
+		img_tomorrow1 = (ImageView) findViewById(R.id.img_tomorrow1);
+		img_tomorrow2 = (ImageView) findViewById(R.id.img_tomorrow2);
 		tomorrow_temp = (TextView) findViewById(R.id.tomorrow_temp);
 		
 		after_tomorrow = (TextView) findViewById(R.id.after_tomorrow);
 		after_tomorrow_date = (TextView) findViewById(R.id.after_tomorrow_date);
-		img_after_tomorrow = (ImageView) findViewById(R.id.img_after_tomorrow);
+		img_after_tomorrow1 = (ImageView) findViewById(R.id.img_after_tomorrow1);
+		img_after_tomorrow2 = (ImageView) findViewById(R.id.img_after_tomorrow2);
 		after_tomorrow_temp = (TextView) findViewById(R.id.after_tomorrow_temp);
 		
-		big_after_tomorrow = (TextView) findViewById(R.id.big_after_tomorrow);
+		/*big_after_tomorrow = (TextView) findViewById(R.id.big_after_tomorrow);
 		big_after_tomorrow_date	 = (TextView) findViewById(R.id.big_after_tomorrow_date);
 		img_big_after_tomorrow = (ImageView) findViewById(R.id.img_big_after_tomorrow);
 		big_after_tomorrow_temp = (TextView) findViewById(R.id.big_after_tomorrow_temp);
@@ -371,7 +428,7 @@ public class WeatherActivity extends Activity{
 		real_big_after_tomorrow = (TextView) findViewById(R.id.real_big_after_tomorrow);
 		real_big_after_tomorrow_date = (TextView) findViewById(R.id.real_big_after_tomorrow_date);
 		img_real_big_after_tomorrow = (ImageView) findViewById(R.id.img_real_big_after_tomorrow);
-		real_big_after_tomorrow_temp = (TextView) findViewById(R.id.real_big_after_tomorrow_temp);
+		real_big_after_tomorrow_temp = (TextView) findViewById(R.id.real_big_after_tomorrow_temp);*/
 	}
 	
 	/**
@@ -394,4 +451,5 @@ public class WeatherActivity extends Activity{
 			progressdialog.dismiss();
 		}
 	}
+	
 }

@@ -1,20 +1,30 @@
 package com.myweather.app.util;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.text.TextUtils;
-import android.widget.Toast;
 
 import com.myweather.app.R;
 import com.myweather.app.db.MyWeatherDB;
@@ -23,13 +33,19 @@ import com.myweather.app.model.County;
 import com.myweather.app.model.Province;
 
 public class Utility {
-	public static final String WEATHER_CONFIG_FILE = "weather.xml";
+	/**
+	 * 保存城市信息的文件名,多个城市后面用 数字区分 排第一的城市就为 city1
+	 */
+	public static final String CITY_CONFIG = "city";
+	public static final String WEATHER_CONFIG = "weather";
+	public static final String REAL_WEATHER_CONFIG = "real_weather";
+	
 	public static ProgressDialog progressdialog = null;
 	/**
 	 * 解析返回结果  将数据插入数据库
-	 * @param db
-	 * @param response
-	 * @param id
+	 * @param db  数据库操作类  
+	 * @param response  格式为  01|北京,02|上海,03|天津,04|重庆,05|黑龙江,06|吉林,07|辽宁,08|内蒙古,09|河北,10|山西,11|陕西,12|山东,13|新疆,14|西藏,15|青海,16|甘肃,17|宁夏,18|河南,19|江苏,20|湖北,21|浙江,22|安徽,23|福建,24|江西,25|湖南,26|贵州,27|四川,28|广东,29|云南,30|广西,31|海南,32|香港,33|澳门,34|台湾
+	 * @param id   上级城市的 编号   如果没有上级城市  则为0
 	 * @return
 	 */
 	public synchronized static boolean handleResponse(MyWeatherDB db,String response,int id){
@@ -60,121 +76,187 @@ public class Utility {
 		return true;
 	}
 	/**
+	 * 发送给服务器的格式  :  
 	 * 解析服务器返回的json数据,并将解析的数据存储到本地
 	 * @param context
-	 * @param response
+	 * @param response  返回的格式为 {"c":
+			{"c1":"101060605","c2":"tongyu","c3":"通榆","c4":"baicheng","c5":"白城","c6":"jilin","c7":"吉林",
+			"c8":"china","c9":"中国","c10":"3","c11":"0436","c12":"137200","c13":122.788000,"c14":44.745000,
+			"c15":"151","c16":"AZ9436","c17":"+8"},
+			"f":{"f1":[
+				           {"fa":"","fb":"00","fc":"","fd":"19","fe":"","ff":"6","fg":"","fh":"1","fi":"04:04|19:38"},
+				           {"fa":"00","fb":"00","fc":"30","fd":"22","fe":"6","ff":"4","fg":"1","fh":"1","fi":"04:04|19:38"},
+				           {"fa":"04","fb":"03","fc":"28","fd":"18","fe":"4","ff":"7","fg":"1","fh":"1","fi":"04:05|19:38"}
+			           ],
+			     "f0":"201506261800"
+			    }
+			}  
+			其中 c代表城市信息  f代表天气信息   具体请参见:http://openweather.weather.com.cn/Public/font/SmartWeatherAPI_Lite_WebAPI_3.0.2.pdf
+	 *@param position 在主界面排在第几
+	 *@return 返回上级城市的拼音  用来访问服务器 获取实时天气
 	 */
-	public static void handleWeatherResponse(Context context,String response){
-		//json 格式  
-		/*//{"weatherinfo":{"city":"北京","city_en":"beijing","date_y":"2015年6月18日","date":"","week":"星期四",
-		"fchh":"11","cityid":"101010100","temp1":"32℃~19℃","temp2":"28℃~17℃","temp3":"32℃~20℃",
-		"temp4":"32℃~21℃","temp5":"31℃~20℃","temp6":"33℃~21℃","tempF1":"89.6℉~66.2℉","tempF2":"82.4℉~62.6℉",
-		"tempF3":"89.6℉~68℉","tempF4":"89.6℉~69.8℉","tempF5":"87.8℉~68℉","tempF6":"91.4℉~69.8℉",
-		"weather1":"多云转雷阵雨","weather2":"雷阵雨转晴","weather3":"晴","weather4":"多云","weather5":"多云转晴",
-		"weather6":"晴转多云","img1":"1","img2":"4","img3":"4","img4":"0","img5":"0","img6":"99","img7":"1",
-		"img8":"99","img9":"1","img10":"0","img11":"0","img12":"1","img_single":"1","img_title1":"多云",
-		"img_title2":"雷阵雨","img_title3":"雷阵雨","img_title4":"晴","img_title5":"晴","img_title6":"晴",
-		"img_title7":"多云","img_title8":"多云","img_title9":"多云","img_title10":"晴","img_title11":"晴",
-		"img_title12":"多云","img_title_single":"多云","wind1":"北风3-4级转微风","wind2":"微风","wind3":"微风",
-		"wind4":"微风","wind5":"微风","wind6":"微风","fx1":"北风","fx2":"微风","fl1":"3-4级转小于3级",
-		"fl2":"小于3级","fl3":"小于3级","fl4":"小于3级","fl5":"小于3级","fl6":"小于3级","index":"炎热",
-		//"index_d":"天气炎热，建议着短衫、短裙、短裤、薄型T恤衫等清凉夏季服装。","index48":"","index48_d":"",
-		//"index_uv":"中等","index48_uv":"","index_xc":"不宜","index_tr":"适宜","index_co":"较不舒适",
-		//"st1":"31","st2":"17","st3":"25","st4":"18","st5":"31","st6":"21","index_cl":"较适宜","index_ls":"适宜",
-		//"index_ag":"不易发"}}
-*/		try {
+	public static void handleWeatherResponse(Context context,String response,int position){
+		/**/
+
+		try {
 			JSONObject jsonobject = new JSONObject(response);
-			JSONObject weatherinfo = jsonobject.getJSONObject("weatherinfo");
-			String city_name = weatherinfo.getString("city");
-			String weatherid = weatherinfo.getString("cityid");
-			String temp1 = weatherinfo.getString("temp1");
-			String temp2 = weatherinfo.getString("temp2");
-			String temp3 = weatherinfo.getString("temp3");
-			String temp4 = weatherinfo.getString("temp4");
-			String temp5 = weatherinfo.getString("temp5");
-			String weather1 = weatherinfo.getString("weather1");
-			String weather2 = weatherinfo.getString("weather2");
-			String weather3 = weatherinfo.getString("weather3");
-			String weather4 = weatherinfo.getString("weather4");
-			String weather5 = weatherinfo.getString("weather5");
+			JSONObject c = jsonobject.getJSONObject("c");
+			String c1 = c.getString("c1");
+			String c2 = c.getString("c2");
+			String c3 = c.getString("c3");
+			String c4 = c.getString("c4");
+			String c5 = c.getString("c5");
+			String c6 = c.getString("c6");
+			String c7 = c.getString("c7");
+			String c8 = c.getString("c8");
+			String c9 = c.getString("c9");
+			String c10 = c.getString("c10");
+			String c11 = c.getString("c11");
+			String c12 = c.getString("c12");
+			String c13 = c.getString("c13");
+			String c14 = c.getString("c14");
+			String c15 = c.getString("c15");
+			String c16 = c.getString("c16");
+			String c17 = c.getString("c17");
 			
-			String img1 = weatherinfo.getString("img1");
-			String img2 = weatherinfo.getString("img2");
-			String img3 = weatherinfo.getString("img3");
-			String img4 = weatherinfo.getString("img4");
-			String img5 = weatherinfo.getString("img5");
-			String img6 = weatherinfo.getString("img6");
-			String img7 = weatherinfo.getString("img7");
-			String img8 = weatherinfo.getString("img8");
-			String img9 = weatherinfo.getString("img9");
-			String img10 = weatherinfo.getString("img10");
+			JSONObject f = jsonobject.getJSONObject("f");
 			
-			String wind1 = weatherinfo.getString("wind1");
-			String wind2 = weatherinfo.getString("wind2");
-			String wind3 = weatherinfo.getString("wind3");
-			String wind4 = weatherinfo.getString("wind4");
-			String wind5 = weatherinfo.getString("wind5");
 			
-			String index_d = weatherinfo.getString("index_d");
+			JSONArray f1 = f.getJSONArray("f1");
 			
-			//String ptime = weatherinfo.getString("ptime");
-			//ptime = new SimpleDateFormat("yyyy-MM-dd").format(new Date())+" "+ptime+":00";
-			saveWeatherInfo(context,city_name,weatherid,temp1,temp2,temp3,temp4,temp5,weather1,weather2,weather3,weather4,weather5
-					,img1,img2,img3,img4,img5,img6,img7,img8,img9,img10,wind1,wind2,wind3,wind4,wind5,index_d);
+			//三天的天气情况
+			JSONObject day1 = f1.getJSONObject(0);
+			String fa1 = day1.getString("fa");
+			String fb1 = day1.getString("fb");
+			String fc1 = day1.getString("fc");
+			String fd1 = day1.getString("fd");
+			String fe1 = day1.getString("fe");
+			String ff1 = day1.getString("ff");
+			String fg1 = day1.getString("fg");
+			String fh1 = day1.getString("fh");
+			String fi1 = day1.getString("fi");
+			
+			JSONObject day2 = f1.getJSONObject(1);
+			String fa2 = day2.getString("fa");
+			String fb2 = day2.getString("fb");
+			String fc2 = day2.getString("fc");
+			String fd2 = day2.getString("fd");
+			String fe2 = day2.getString("fe");
+			String ff2 = day2.getString("ff");
+			String fg2 = day2.getString("fg");
+			String fh2 = day2.getString("fh");
+			String fi2 = day2.getString("fi");
+			
+			JSONObject day3 = f1.getJSONObject(2);
+			String fa3 = day3.getString("fa");
+			String fb3 = day3.getString("fb");
+			String fc3 = day3.getString("fc");
+			String fd3 = day3.getString("fd");
+			String fe3 = day3.getString("fe");
+			String ff3 = day3.getString("ff");
+			String fg3 = day3.getString("fg");
+			String fh3 = day3.getString("fh");
+			String fi3 = day3.getString("fi");
+			//发布时间
+			
+			String date = f.getString("f0");
+			
+			saveCityinfo(context,c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15,c16,c17,position);
+			saveCityWeatherinfo(context,fa1,fb1,fc1,fd1,fe1,ff1,fg1,fh1,fi1,fa2,fb2,fc2,fd2,fe2,ff2,fg2,fh2,fi2,fa3,fb3,fc3,fd3,fe3,ff3,fg3,fh3,fi3,position);
 		} catch (JSONException e) {
 			e.printStackTrace();
-		}
 
+		}
+		
+				
 	}
-	/**
-	 * 将服务器返回的所有天气信息写入 sharepreferences文件中
-	 * 以后重构一下  要写在数据库中
+	/*
+	 * 保存城市的天气信息  用c1作为城市标示 作为文件名
 	 */
-	public static void saveWeatherInfo(Context context, String city_name,
-			String weatherid, String temp1, String temp2, String temp3,
-			String temp4, String temp5, String weather1, String weather2,
-			String weather3, String weather4, String weather5, String img1,
-			String img2, String img3, String img4, String img5, String img6,
-			String img7, String img8, String img9, String img10, String wind1,
-			String wind2, String wind3, String wind4, String wind5,
-			String index_d) {
-		SharedPreferences sdf = context.getSharedPreferences(WEATHER_CONFIG_FILE,Context.MODE_PRIVATE);
-		Editor editor = sdf.edit();
-		editor.putString("city_name", city_name);
-		editor.putString("weatherid", weatherid);
-		editor.putString("temp1", temp1);
-		editor.putString("temp2", temp2);
-		editor.putString("temp3", temp3);
-		editor.putString("temp4", temp4);
-		editor.putString("temp5", temp5);
+	private static void saveCityWeatherinfo(Context context, String fa1,
+			String fb1, String fc1, String fd1, String fe1, String ff1,
+			String fg1, String fh1, String fi1, String fa2, String fb2,
+			String fc2, String fd2, String fe2, String ff2, String fg2,
+			String fh2, String fi2, String fa3, String fb3, String fc3,
+			String fd3, String fe3, String ff3, String fg3, String fh3,
+			String fi3, int position) {
+		SharedPreferences sp = context.getSharedPreferences(WEATHER_CONFIG+position, Context.MODE_PRIVATE);
+		Editor editor = sp.edit();
+		if(isDay()){
+			editor.putString("fa1", fa1);
+			editor.putString("fc1", fc1);
+			editor.putString("fe1", fe1);
+			editor.putString("fg1", fg1);
+		}
 		
-		editor.putString("weather1", weather1);
-		editor.putString("weather2", weather2);
-		editor.putString("weather3", weather3);
-		editor.putString("weather4", weather4);
-		editor.putString("weather5", weather5);
+		editor.putString("fb1", fb1);
 		
-		editor.putString("img1", img1);
-		editor.putString("img2", img2);
-		editor.putString("img3", img3);
-		editor.putString("img4", img4);
-		editor.putString("img5", img5);
-		editor.putString("img6", img6);
-		editor.putString("img7", img7);
-		editor.putString("img8", img8);
-		editor.putString("img9", img9);
-		editor.putString("img10", img10);
+		editor.putString("fd1", fd1);
 		
-		editor.putString("wind1", wind1);
-		editor.putString("wind2", wind2);
-		editor.putString("wind3", wind3);
-		editor.putString("wind4", wind4);
-		editor.putString("wind5", wind5);
+		editor.putString("ff1", ff1);
 		
-		editor.putString("index_d", index_d);
-		editor.putString("current_date", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+		editor.putString("fh1", fh1);
+		editor.putString("fi1", fi1);
+		
+		editor.putString("fa2", fa2);
+		editor.putString("fb2", fb2);
+		editor.putString("fc2", fc2);
+		editor.putString("fd2", fd2);
+		editor.putString("fe2", fe2);
+		editor.putString("ff2", ff2);
+		editor.putString("fg2", fg2);
+		editor.putString("fh2", fh2);
+		editor.putString("fi2", fi2);
+		
+		editor.putString("fa3", fa3);
+		editor.putString("fb3", fb3);
+		editor.putString("fc3", fc3);
+		editor.putString("fd3", fd3);
+		editor.putString("fe3", fe3);
+		editor.putString("ff3", ff3);
+		editor.putString("fg3", fg3);
+		editor.putString("fh3", fh3);
+		editor.putString("fi3", fi3);
+		
 		editor.commit();
 	}
+	/**
+	 * 保存城市信息
+	 */
+	private static void saveCityinfo(Context context,String c1, String c2, String c3,
+			String c4, String c5, String c6, String c7, String c8, String c9,
+			String c10, String c11, String c12, String c13, String c14,
+			String c15, String c16, String c17,int position) {
+		SharedPreferences sp = context.getSharedPreferences(CITY_CONFIG+position, Context.MODE_PRIVATE);
+		String eq_c1 = sp.getString("c1", "");
+		if(eq_c1.equals(c1)){
+			return;
+		}
+		Editor editor = sp.edit();
+		editor.putString("position", ""+position);
+		editor.putString("c1",c1);
+		editor.putString("c2",c2);
+		editor.putString("c3",c3);
+		editor.putString("c4",c4);
+		editor.putString("c5",c5);
+		editor.putString("c6",c6);
+		editor.putString("c7",c7);
+		editor.putString("c8",c8);
+		editor.putString("c9",c9);
+		editor.putString("c10",c10);
+		editor.putString("c11",c11);
+		editor.putString("c12",c12);
+		editor.putString("c13",c13);
+		editor.putString("c14",c14);
+		editor.putString("c15",c15);
+		editor.putString("c16",c16);
+		editor.putString("c17",c17);
+		
+		editor.commit();
+		
+	}
+
+	
 	/**
 	 * 获取今天是星期几
 	 * @return
@@ -247,7 +329,7 @@ public class Utility {
 	}
 	/**
 	 * 获取更新时间到现在时间的间隔时间
-	 * @param ptime  更新时间
+	 * @param ptime  更新时间 格式为yyyy-MM-dd HH:mm:ss
 	 * @return
 	 */
 	public static String getUpdate_time(String ptime){
@@ -293,4 +375,90 @@ public class Utility {
          return R.drawable.ic_launcher;  
         }  
        }  
+	/**
+	 * 判断是否是白天
+	 * @return 如果是白天 返回true
+	 */
+	public static boolean isDay(){
+		Calendar c = Calendar.getInstance();
+		c.setTime(new Date());
+		int hour = c.get(Calendar.HOUR_OF_DAY);
+		if(hour>=18||hour<=8){
+			return false;
+		}
+		return true;
+	}
+	
+	/**
+	 * 处理服务器返回的实时天气  格式为
+	 * <hunan dn="nay">
+<city cityX="249" cityY="98" cityname="张家界" centername="张家界" fontColor="FFFFFF" pyName="zhangjiajie" state1="1" state2="1" stateDetailed="多云" tem1="25" tem2="35" temNow="28" windState="西南风小于3级" windDir="西风" windPower="2级" humidity="72%" time="22:00" url="101251101"/>
+<city cityX="196.2" cityY="164.8" cityname="湘西" centername="吉首" fontColor="FFFFFF" pyName="xiangxi" state1="1" state2="1" stateDetailed="多云" tem1="26" tem2="33" temNow="27" windState="东北风小于3级"windDir="西南风" windPower="1级" humidity="87%" time="22:00" url="101251501"/>
+<city cityX="331.75" cityY="121.4" cityname="常德" centername="常德" fontColor="FFFFFF" pyName="changde" state1="1" state2="1" stateDetailed="多云" tem1="27" tem2="36" temNow="30" windState="南风小于3级"windDir="南风" windPower="1级" humidity="83%" time="22:00" url="101250601"/>
+</hunan>
+	 * @param url  返回的xml中city标签的属性  用来确定我们取哪一个标签的值
+	 * @param position   第几个城市
+	 */
+	public static void handleRealWeather(Context context,String url,int position,File in){
+		DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance(); 
+		try {
+			DocumentBuilder builder = builderFactory.newDocumentBuilder();
+			Document document = builder.parse(in);
+			Element root = document.getDocumentElement();
+			NodeList nodelist = root.getElementsByTagName("city");
+			for(int i=0;i<nodelist.getLength();i++){
+				Element e = (Element) nodelist.item(i);
+				String url_e = e.getAttribute("url");
+				if(url.equals(url_e)){
+					String state1 = e.getAttribute("state1");
+					String state2 = e.getAttribute("state2");
+					String temp1 = e.getAttribute("tem1");
+					String temp2 = e.getAttribute("tem2");
+					String stateDetailed = e.getAttribute("stateDetailed");
+					String temNow = e.getAttribute("temNow");
+					String windState = e.getAttribute("windState");
+					String windDir = e.getAttribute("windDir");
+					String windPower = e.getAttribute("windPower");
+					String humidity = e.getAttribute("humidity");
+					String time = e.getAttribute("time");
+					String current_time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
+					saveRealWeatherInfo(context,url,state1,state2,stateDetailed,temNow,windState,windDir,windPower,humidity,position,current_time,time,temp1,temp2);
+				}
+			}
+		} catch (ParserConfigurationException e) {
+			e.printStackTrace();
+		} catch (SAXException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	/**
+	 * 保存实时天气到 REAL_WEATHER_CONFIG+position 文件中
+	 * @param temp2 
+	 * @param temp1 
+	 */
+	private static void saveRealWeatherInfo(Context context, String url,
+			String state1, String state2, String stateDetailed, String temNow,
+			String windState, String windDir, String windPower, String humidity,int position,String current_time,String time, String temp1, String temp2) {
+		SharedPreferences sp = context.getSharedPreferences(REAL_WEATHER_CONFIG+position, context.MODE_PRIVATE);
+		Editor editor = sp.edit();
+		editor.putString("url",url );
+		editor.putString("state1",state1 );
+		editor.putString("state2",state2 );
+		editor.putString("stateDetailed",stateDetailed );
+		editor.putString("temNow",temNow );
+		editor.putString("windState",windState );
+		editor.putString("windDir",windDir );
+		editor.putString("windPower", windPower);
+		editor.putString("humidity", humidity);
+		editor.putString("current_time", current_time);
+		editor.putString("time", time);
+		editor.putString("temp1", temp1);
+		editor.putString("temp2", temp2);
+		editor.commit();
+		
+	}
+	
+
 }
