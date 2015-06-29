@@ -8,11 +8,8 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.ListFragment;
 import android.text.TextUtils;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
@@ -30,7 +27,7 @@ import com.myweather.app.util.HttpCallbackListener;
 import com.myweather.app.util.HttpUtil;
 import com.myweather.app.util.Utility;
 
-public class ChooseAreaFragment extends ListFragment{
+public class ChooseAreaActivity extends Activity{
 	public static final int LEVEL_PROVINCE=0;
 	public static final int LEVEL_CITY=1;
 	public static final int LEVEL_COUNTY=2;
@@ -71,37 +68,29 @@ public class ChooseAreaFragment extends ListFragment{
 	 */
 	private int currentLevel;
 	
-	/**
-	 * 第几座城市开启的菜单
-	 */
-	private int position = 1;
 	
-	private View view;
-	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-		view = inflater.inflate(R.layout.choose_area, null);
-		return view;
-	}
 	
-	public void onActivityCreated(Bundle savedInstanceState) {
-		super.onActivityCreated(savedInstanceState);
+	
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		requestWindowFeature(Window.FEATURE_NO_TITLE);
+		setContentView(R.layout.choose_area);
+		
 		initView();
 		initListener();
 		queryProvinces();
-		
-		
 	}
-
-	
 	/**
 	 * 初始化所有的视图,变量
 	 */
 	private void initView() {
-		listview = (ListView) view.findViewById(android.R.id.list);
-		title_text = (TextView) view.findViewById(R.id.title_text);
+		listview = (ListView) findViewById(android.R.id.list);
+		title_text = (TextView) findViewById(R.id.title_text);
 		datalist = new ArrayList<String>(); 
-		adapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1, datalist);
+		adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, datalist);
 		listview.setAdapter(adapter);
-		mDB = MyWeatherDB.getInstance(getActivity());
+		mDB = MyWeatherDB.getInstance(this);
 	}
 	/**
 	 * 初始化 所有的监听事件
@@ -119,20 +108,11 @@ public class ChooseAreaFragment extends ListFragment{
 					selectedCity = cityList.get(position);
 					queryCounty();
 				}else if(currentLevel==LEVEL_COUNTY){
-					Intent intent = new Intent(getActivity(),WeatherActivity.class);
+					Intent intent = new Intent(ChooseAreaActivity.this,WeatherActivity.class);
 					String countycode =  countyList.get(position).getCountyCode();
 					intent.putExtra("countycode", countycode);
-					intent.putExtra("position", 1);
 					startActivity(intent);
-					getActivity().finish();
-					/*if (getActivity() instanceof WeatherActivity) {
-						WeatherActivity wa = (WeatherActivity) getActivity();
-						wa.wpa.removeFragment(position);
-						wa.wpa.addFragment(position, new WeatherFragment(position));
-						wa.wpa.notifyDataSetChanged();
-						
-					}*/
-					
+					finish();
 				}
 			}
 			
@@ -207,11 +187,10 @@ public class ChooseAreaFragment extends ListFragment{
 			address = "http://www.weather.com.cn/data/list3/city.xml";
 		}
 		showProgressDialog();
-		
 		HttpUtil.sendHttpRequest(address, new HttpCallbackListener() {
 			boolean result = false;
 			@Override
-			public void onFinish(String response,InputStream in) {
+			public void onFinish(String response, InputStream in) {
 				if(code!=null){
 					result = Utility.handleResponse(mDB, response, Integer.parseInt(code));
 				}else{
@@ -220,7 +199,7 @@ public class ChooseAreaFragment extends ListFragment{
 				
 				if(result){
 					//可以更新主界面动画
-					getActivity().runOnUiThread(new Runnable() {
+					runOnUiThread(new Runnable() {
 						@Override
 						public void run() {
 							closeProgressDialog();
@@ -240,16 +219,17 @@ public class ChooseAreaFragment extends ListFragment{
 			public void onError(Exception e) {
 				e.printStackTrace();
 				final String msg = e.getMessage();
-				getActivity().runOnUiThread(new Runnable() {
+				runOnUiThread(new Runnable() {
 					
 					@Override
 					public void run() {
 						closeProgressDialog();
-						Toast.makeText(getActivity(), "加载失败"+msg, 0).show();
+						Toast.makeText(ChooseAreaActivity.this, "加载失败"+msg, 0).show();
 						
 					}
 				});
 			}
+
 		});
 	}
 	/**
@@ -257,7 +237,7 @@ public class ChooseAreaFragment extends ListFragment{
 	 */
 	private void showProgressDialog() {
 		if(progressdialog==null){
-			progressdialog = new ProgressDialog(getActivity());
+			progressdialog = new ProgressDialog(this);
 			progressdialog.setMessage("正在加载...");
 			//设置不能按返回取消
 			progressdialog.setCanceledOnTouchOutside(false);
@@ -275,13 +255,14 @@ public class ChooseAreaFragment extends ListFragment{
 	/**
 	 * 监听返回键  重载
 	 */
+	@Override
 	public void onBackPressed() {
 		
 		if(currentLevel==LEVEL_CITY){
 			queryProvinces();
 		}else if(currentLevel==LEVEL_PROVINCE){
-			startActivity(new Intent(getActivity(),WeatherActivity.class));
-			getActivity().finish();
+			startActivity(new Intent(this,WeatherActivity.class));
+			finish();
 		}else if(currentLevel==LEVEL_COUNTY){
 			queryCities();
 		}
