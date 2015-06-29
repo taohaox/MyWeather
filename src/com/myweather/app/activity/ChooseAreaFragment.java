@@ -4,7 +4,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
@@ -12,11 +11,12 @@ import android.support.v4.app.ListFragment;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -75,7 +75,10 @@ public class ChooseAreaFragment extends ListFragment{
 	 * 第几座城市开启的菜单
 	 */
 	private int position = 1;
-	
+	/**
+	 * 返回按钮
+	 */
+	private ImageView back;
 	private View view;
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		view = inflater.inflate(R.layout.choose_area, null);
@@ -102,11 +105,19 @@ public class ChooseAreaFragment extends ListFragment{
 		adapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1, datalist);
 		listview.setAdapter(adapter);
 		mDB = MyWeatherDB.getInstance(getActivity());
+		back = (ImageView) view.findViewById(R.id.img_back);
 	}
 	/**
 	 * 初始化 所有的监听事件
 	 */
 	private void initListener() {
+		back.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				onBackPressed();
+			}
+		});
 		listview.setOnItemClickListener(new OnItemClickListener() {
 
 			@Override

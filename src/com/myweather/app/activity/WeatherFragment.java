@@ -61,7 +61,7 @@ public class WeatherFragment extends Fragment{
 	/**
 	 * 点击刷新
 	 */
-	private ProgressBar pb_update;
+	private ImageView img_update;
 	/**
 	 * 点击将天气信息发送给好友
 	 */
@@ -331,7 +331,7 @@ public class WeatherFragment extends Fragment{
 	 * 初始化各种监听事件
 	 */
 	private void initListener() {
-		pb_update.setOnClickListener(new OnClickListener() {
+		img_update.setOnClickListener(new OnClickListener() {
 			
 			@Override
 			public void onClick(View v) {
@@ -379,7 +379,7 @@ public class WeatherFragment extends Fragment{
 		img_sendmsg = (ImageView) view.findViewById(R.id.img_sendmsg);
 		img_listcity = (ImageView) view.findViewById(R.id.img_listcity);
 		img_getdesc = (ImageView) view.findViewById(R.id.img_getdesc);
-		pb_update = (ProgressBar) view.findViewById(R.id.pb_update);
+		img_update = (ImageView) view.findViewById(R.id.img_update);
 		
 		real_time_temp = (TextView) view.findViewById(R.id.real_time_temp);
 		temp_range = (TextView) view.findViewById(R.id.temp_range);
