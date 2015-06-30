@@ -171,7 +171,7 @@ public class Utility {
 				
 	}
 	/*
-	 * 保存城市的天气信息  用c1作为城市标示 作为文件名
+	 * 保存城市的天气信息  
 	 */
 	private static void saveCityWeatherinfo(Context context, String fa1,
 			String fb1, String fc1, String fd1, String fe1, String ff1,

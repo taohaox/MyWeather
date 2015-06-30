@@ -188,7 +188,7 @@ public class WeatherFragment extends Fragment{
 			String current_time = sp.getString("current_time", "");
 			
 			temp_desc.setText(stateDetailed);
-			temp_range.setText(temp2+"/"+temp1+"°C");
+			temp_range.setText(temp1+"/"+temp2+"°C");
 			week_today.setText(Utility.getTodayOfWeek(new Date()));
 			update_time.setText(Utility.getUpdate_time(current_time));
 			real_time_temp.setText(temNow);
@@ -213,7 +213,7 @@ public class WeatherFragment extends Fragment{
 			
 			img_today1.setImageResource(Utility.getImage(img1));
 			img_today2.setImageResource(Utility.getImage(img2));
-			temp.setText(temp2+"~"+temp1+"°C");
+			temp.setText(temp1+"~"+temp2+"°C");
 			
 			//第二天
 			c.add(Calendar.DATE, 1);
@@ -273,14 +273,8 @@ public class WeatherFragment extends Fragment{
 				@Override
 				public void onFinish(String response,InputStream in) {
 					Utility.handleWeatherResponse(getActivity(), response,position);
-					getActivity().runOnUiThread(new Runnable() {
 						
-						@Override
-						public void run() {
-							//必须等 未来信息更新完成才能更新实时天气
-							update_real_weather(position);
-						}
-					});
+					update_real_weather(position);
 				}
 				
 				@Override

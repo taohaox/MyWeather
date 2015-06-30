@@ -1,5 +1,6 @@
 package com.myweather.app.activity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
@@ -10,6 +11,7 @@ import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 import com.jeremyfeinstein.slidingmenu.lib.app.SlidingFragmentActivity;
 import com.myweather.app.R;
 import com.myweather.app.adapter.WeatherPagerAdapter;
+import com.myweather.app.service.AutoUpdateWeatherService;
 
 public class WeatherActivity extends SlidingFragmentActivity{
 	public SlidingMenu menu;  
@@ -78,6 +80,9 @@ public class WeatherActivity extends SlidingFragmentActivity{
 		
 		vp.setCurrentItem(0);
 		getSlidingMenu().setTouchModeAbove(SlidingMenu.TOUCHMODE_FULLSCREEN);
+		
+		Intent intent = new Intent(this,AutoUpdateWeatherService.class);
+		startService(intent);
 	}
 	
 	@Override
