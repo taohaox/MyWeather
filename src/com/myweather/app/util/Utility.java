@@ -159,10 +159,10 @@ public class Utility {
 			String fi3 = day3.getString("fi");
 			//发布时间
 			
-			String date = f.getString("f0");
+			String f0 = f.getString("f0");
 			
 			saveCityinfo(context,c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15,c16,c17,position);
-			saveCityWeatherinfo(context,fa1,fb1,fc1,fd1,fe1,ff1,fg1,fh1,fi1,fa2,fb2,fc2,fd2,fe2,ff2,fg2,fh2,fi2,fa3,fb3,fc3,fd3,fe3,ff3,fg3,fh3,fi3,position);
+			saveCityWeatherinfo(context,f0,fa1,fb1,fc1,fd1,fe1,ff1,fg1,fh1,fi1,fa2,fb2,fc2,fd2,fe2,ff2,fg2,fh2,fi2,fa3,fb3,fc3,fd3,fe3,ff3,fg3,fh3,fi3,position);
 		} catch (JSONException e) {
 			e.printStackTrace();
 
@@ -173,7 +173,7 @@ public class Utility {
 	/*
 	 * 保存城市的天气信息  
 	 */
-	private static void saveCityWeatherinfo(Context context, String fa1,
+	private static void saveCityWeatherinfo(Context context,String f0, String fa1,
 			String fb1, String fc1, String fd1, String fe1, String ff1,
 			String fg1, String fh1, String fi1, String fa2, String fb2,
 			String fc2, String fd2, String fe2, String ff2, String fg2,
@@ -188,9 +188,9 @@ public class Utility {
 			editor.putString("fe1", fe1);
 			editor.putString("fg1", fg1);
 		}
+		editor.putString("f0", f0);
 		
 		editor.putString("fb1", fb1);
-		
 		editor.putString("fd1", fd1);
 		
 		editor.putString("ff1", ff1);

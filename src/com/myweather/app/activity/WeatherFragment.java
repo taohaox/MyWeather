@@ -47,6 +47,10 @@ public class WeatherFragment extends Fragment{
 	 */
 	private TextView temp_desc;
 	/**
+	 * 风力描述
+	 */
+	private TextView wind_desc;
+	/**
 	 * 今天是星期几
 	 */
 	private TextView week_today;
@@ -71,7 +75,7 @@ public class WeatherFragment extends Fragment{
 	 */
 	private ImageView img_getdesc;
 	/**
-	 * 点击查看其它城市的温度
+	 * 点击查看更多
 	 */
 	private ImageView img_listcity;
 	/**
@@ -104,6 +108,7 @@ public class WeatherFragment extends Fragment{
 	View view;
 	public int position;
 	public String countycode;
+	String c1;
 	public WeatherFragment(int position){
 		this(position, null);
 	}
@@ -150,7 +155,7 @@ public class WeatherFragment extends Fragment{
 	 */
 	private void showWeatherInfo(int position) {
 		SharedPreferences sp = getActivity().getSharedPreferences(Utility.CITY_CONFIG+position, getActivity().MODE_PRIVATE);
-		String c1 = sp.getString("c1", "");
+		c1 = sp.getString("c1", "");
 		if(c1.equals("")){
 			if(position==1){
 				AlertDialog.Builder builder = new Builder(getActivity());
@@ -188,6 +193,7 @@ public class WeatherFragment extends Fragment{
 			String current_time = sp.getString("current_time", "");
 			
 			temp_desc.setText(stateDetailed);
+			wind_desc.setText(sp.getString("windState", ""));
 			temp_range.setText(temp1+"/"+temp2+"°C");
 			week_today.setText(Utility.getTodayOfWeek(new Date()));
 			update_time.setText(Utility.getUpdate_time(current_time));
@@ -334,8 +340,8 @@ public class WeatherFragment extends Fragment{
 				
 				SharedPreferences sp = getActivity().getSharedPreferences(Utility.CITY_CONFIG+position, getActivity().MODE_PRIVATE);
 				update_weather(sp.getString("c1", ""),"weather");
-				//Intent intent = new Intent(getActivity(),AutoUpdateWeatherService.class);
-				//getActivity().startService(intent);	
+				Intent intent = new Intent(getActivity(),AutoUpdateWeatherService.class);
+				getActivity().startService(intent);	
 			}
 		});
 		img_getdesc.setOnClickListener(new OnClickListener() {
@@ -350,10 +356,10 @@ public class WeatherFragment extends Fragment{
 			
 			@Override
 			public void onClick(View v) {
-				//Intent intent = new Intent(WeatherActivity.this,ChooseAreaActivity.class);
-				//startActivity(intent);
-				//finish();
-				//menu.showContextMenu();
+				Intent intent = new Intent(getActivity(),DescWeatherInfoActivity.class);
+				intent.putExtra("position", position);
+				intent.putExtra("weatherid", c1);
+				getActivity().startActivity(intent);
 			}
 		});
 		img_sendmsg.setOnClickListener(new OnClickListener() {
@@ -361,6 +367,21 @@ public class WeatherFragment extends Fragment{
 			@Override
 			public void onClick(View v) {
 		
+			}
+		});
+		
+		
+		/**
+		 * 点击更多详情
+		 */
+		more_click.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				Intent intent = new Intent(getActivity(),DescWeatherInfoActivity.class);
+				intent.putExtra("position", position);
+				intent.putExtra("weatherid", c1);
+				getActivity().startActivity(intent);
 			}
 		});
 	}
@@ -379,6 +400,7 @@ public class WeatherFragment extends Fragment{
 		real_time_temp = (TextView) view.findViewById(R.id.real_time_temp);
 		temp_range = (TextView) view.findViewById(R.id.temp_range);
 		temp_desc = (TextView) view.findViewById(R.id.temp_desc);
+		wind_desc = (TextView) view.findViewById(R.id.wind_desc);
 		week_today = (TextView) view.findViewById(R.id.week_today);
 		more_click = (TextView) view.findViewById(R.id.more_click);
 		update_time = (TextView) view.findViewById(R.id.update_time);

@@ -128,10 +128,6 @@ public class WeatherActivity extends SlidingFragmentActivity implements HandlerC
 		WeatherFragment wf =  (WeatherFragment) wpa.getItem(vp.getCurrentItem());
 		wf.countycode = countyid;
 		wf.update_weather(countyid, "county");
-		//wpa.removeFragment(position);
-		//System.out.println("wpa.removeFragment(position); 共有"+wpa.getCount()+"个view");
-		//wpa.addFragment(position, new WeatherFragment(position,countyid));
-		//System.out.println("wpa.addFragment(position, new WeatherFragment(position)); 共有"+wpa.getCount()+"个view");
 		wpa.notifyDataSetChanged();//通知更新Fragment
 		menu.showContent();  
 	}  

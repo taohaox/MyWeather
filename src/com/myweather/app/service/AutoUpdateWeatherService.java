@@ -14,6 +14,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.IBinder;
 import android.os.SystemClock;
+import android.util.Log;
 
 import com.myweather.app.receiver.AlarmReceiver;
 import com.myweather.app.util.HttpCallbackListener;
@@ -39,6 +40,7 @@ public class AutoUpdateWeatherService extends Service{
 				updateWeather(3);
 				updateWeather(4);
 				updateWeather(5);
+				Log.e("aaa", "天气已更新!");
 			}
 
 			
