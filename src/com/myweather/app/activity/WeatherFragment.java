@@ -70,22 +70,8 @@ public class WeatherFragment extends Fragment{
 	 * 更新时间与现在时间的差值
 	 */
 	private TextView update_time;
-	/**
-	 * 点击刷新
-	 */
-	private ImageView img_update;
-	/**
-	 * 点击将天气信息发送给好友
-	 */
-	private ImageView img_sendmsg;
-	/**
-	 * 点击进入weather官网查看详细信息
-	 */
-	private ImageView img_getdesc;
-	/**
-	 * 点击查看更多
-	 */
-	private ImageView img_listcity;
+	
+	
 	/**
 	 * 天气播报的地名
 	 */
@@ -358,46 +344,6 @@ public class WeatherFragment extends Fragment{
 	 * 初始化各种监听事件
 	 */
 	private void initListener() {
-		img_update.setOnClickListener(new OnClickListener() {
-			
-			@Override
-			public void onClick(View v) {
-				//pb_update.setProgress(0);
-				//Toast.makeText(WeatherActivity.this, "开始更新天气", 0).show();
-				
-				SharedPreferences sp = getActivity().getSharedPreferences(Utility.CITY_CONFIG+position, getActivity().MODE_PRIVATE);
-				update_weather(sp.getString("c1", ""),"weather");
-				Intent intent = new Intent(getActivity(),AutoUpdateWeatherService.class);
-				getActivity().startService(intent);	
-			}
-		});
-		img_getdesc.setOnClickListener(new OnClickListener() {
-			
-			@Override
-			public void onClick(View v) {
-				// TODO Auto-generated method stub
-				
-			}
-		});
-		img_listcity.setOnClickListener(new OnClickListener() {
-			
-			@Override
-			public void onClick(View v) {
-				Intent intent = new Intent(getActivity(),DescWeatherInfoActivity.class);
-				intent.putExtra("position", position);
-				intent.putExtra("weatherid", c1);
-				getActivity().startActivity(intent);
-			}
-		});
-		img_sendmsg.setOnClickListener(new OnClickListener() {
-	
-			@Override
-			public void onClick(View v) {
-		
-			}
-		});
-		
-		
 		/**
 		 * 点击更多详情
 		 */
@@ -418,11 +364,7 @@ public class WeatherFragment extends Fragment{
 	 * 初始化视图
 	 */
 	private void initView() {
-		//最下面四个操作选项
-		img_sendmsg = (ImageView) view.findViewById(R.id.img_sendmsg);
-		img_listcity = (ImageView) view.findViewById(R.id.img_listcity);
-		img_getdesc = (ImageView) view.findViewById(R.id.img_getdesc);
-		img_update = (ImageView) view.findViewById(R.id.img_update);
+		
 		
 		real_time_temp = (TextView) view.findViewById(R.id.real_time_temp);
 		temp_range = (TextView) view.findViewById(R.id.temp_range);
