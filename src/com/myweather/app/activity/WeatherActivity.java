@@ -63,7 +63,7 @@ public class WeatherActivity extends SlidingFragmentActivity implements HandlerC
 			public void onPageSelected(int position) {
 				switch (position) {
 				case 0:
-					getSlidingMenu().setTouchModeAbove(SlidingMenu.TOUCHMODE_FULLSCREEN);
+					getSlidingMenu().setTouchModeAbove(SlidingMenu.TOUCHMODE_NONE);
 					break;
 				default:
 					getSlidingMenu().setTouchModeAbove(SlidingMenu.TOUCHMODE_MARGIN);
@@ -74,7 +74,7 @@ public class WeatherActivity extends SlidingFragmentActivity implements HandlerC
 		});
 		
 		vp.setCurrentItem(0);
-		getSlidingMenu().setTouchModeAbove(SlidingMenu.TOUCHMODE_FULLSCREEN);
+		getSlidingMenu().setTouchModeAbove(SlidingMenu.TOUCHMODE_NONE);
 	}
 	
 	@Override

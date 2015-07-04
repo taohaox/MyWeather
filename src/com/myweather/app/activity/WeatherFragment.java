@@ -51,6 +51,14 @@ public class WeatherFragment extends Fragment{
 	 */
 	private TextView wind_desc;
 	/**
+	 * 空气的描述
+	 */
+	private TextView air;
+	/**
+	 * pm2.5
+	 */
+	private TextView pm2_5;
+	/**
 	 * 今天是星期几
 	 */
 	private TextView week_today;
@@ -191,13 +199,16 @@ public class WeatherFragment extends Fragment{
 			String temNow = sp.getString("temNow", "");  //描述
 			String stateDetailed = sp.getString("stateDetailed", "");
 			String current_time = sp.getString("current_time", "");
-			
+			String quality = sp.getString("quality", "");
+			String pm = sp.getString("pm2_5", "");
 			temp_desc.setText(stateDetailed);
 			wind_desc.setText(sp.getString("windState", ""));
 			temp_range.setText(temp1+"/"+temp2+"°C");
 			week_today.setText(Utility.getTodayOfWeek(new Date()));
 			update_time.setText(Utility.getUpdate_time(current_time));
 			real_time_temp.setText(temNow);
+			pm2_5.setText("PM2.5 "+pm);
+			air.setText("空气"+quality);
 			
 			SimpleDateFormat sf = new SimpleDateFormat("M月dd日");
 			Date date = new Date();
@@ -296,7 +307,7 @@ public class WeatherFragment extends Fragment{
 	public void update_real_weather(final int position){
 		SharedPreferences sp = getActivity().getSharedPreferences(Utility.CITY_CONFIG+position, getActivity().MODE_PRIVATE);
 		final String url = sp.getString("c1", ""); //c1为天气编号   是即将返回的xml中的url属性
-		String code = sp.getString("c4", "");
+		final String code = sp.getString("c4", "");
 		String httpaddr = "http://flash.weather.com.cn/wmaps/xml/"+code+".xml";
 		HttpUtil.sendHttpRequest(httpaddr, new HttpCallbackListener() {
 			
@@ -312,6 +323,22 @@ public class WeatherFragment extends Fragment{
 					e.printStackTrace();
 				} 
 				Utility.handleRealWeather(getActivity(),url,position,file);
+				update_pm2(position, code);
+			}
+			
+			@Override
+			public void onError(Exception e) {
+				e.printStackTrace();
+			}
+		});
+	}
+	public void update_pm2(final int position,String city){
+		String address = "http://www.pm25.in/api/querys/pm2_5.json?city="+city+"&token=5j1znBVAsnSf5xQyNQyq";
+		HttpUtil.sendHttpRequest(address, new HttpCallbackListener() {
+			
+			@Override
+			public void onFinish(String response, InputStream in) {
+				Utility.handlerPM2(getActivity(), position, response);
 				getActivity().runOnUiThread(new Runnable() {
 					
 					@Override
@@ -401,6 +428,8 @@ public class WeatherFragment extends Fragment{
 		temp_range = (TextView) view.findViewById(R.id.temp_range);
 		temp_desc = (TextView) view.findViewById(R.id.temp_desc);
 		wind_desc = (TextView) view.findViewById(R.id.wind_desc);
+		air = (TextView) view.findViewById(R.id.air);
+		pm2_5 = (TextView) view.findViewById(R.id.pm2_5);
 		week_today = (TextView) view.findViewById(R.id.week_today);
 		more_click = (TextView) view.findViewById(R.id.more_click);
 		update_time = (TextView) view.findViewById(R.id.update_time);

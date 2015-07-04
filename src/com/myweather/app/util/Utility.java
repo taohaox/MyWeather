@@ -460,5 +460,28 @@ public class Utility {
 		
 	}
 	
+	/**
+	 * 处理pm2.5 返回的json   保存在real_weather的文件中 
+	 * @param context
+	 * @param position   第几座城市
+	 * @param response   返回的结果
+	 */
+	public static void handlerPM2(Context context,int position,String response){
+		//获取可以往里面添加数据的sp
+		SharedPreferences sp = context.getSharedPreferences(REAL_WEATHER_CONFIG+position, context.MODE_APPEND);
+		Editor editor = sp.edit();
+		
+		try {
+			JSONArray arr = new JSONArray(response);
+			JSONObject obj = arr.getJSONObject(0);
+			String pm2_5 = obj.getString("pm2_5");
+			String quality = obj.getString("quality");
+			editor.putString("pm2_5", pm2_5);
+			editor.putString("quality", quality);
+			editor.commit();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 
 }
