@@ -6,14 +6,16 @@ import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
 import android.view.MenuItem;
 import android.view.Window;
+import android.widget.ImageView;
 
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 import com.jeremyfeinstein.slidingmenu.lib.app.SlidingFragmentActivity;
 import com.myweather.app.R;
+import com.myweather.app.activity.ChooseAreaFragment.HandlerChoose;
 import com.myweather.app.adapter.WeatherPagerAdapter;
 import com.myweather.app.service.AutoUpdateWeatherService;
 
-public class WeatherActivity extends SlidingFragmentActivity{
+public class WeatherActivity extends SlidingFragmentActivity implements HandlerChoose{
 	public SlidingMenu menu;  
 	public ViewPager vp;
 	public WeatherPagerAdapter wpa;
@@ -44,16 +46,9 @@ public class WeatherActivity extends SlidingFragmentActivity{
         initView();
 	}
 	private void initView() {
-		String countycode = getIntent().getStringExtra("countycode");
-		int position = getIntent().getIntExtra("position", 1);
-		System.out.println("countycode:"+countycode+" position:"+position);
 		vp = new ViewPager(this);
 		vp.setId("VP".hashCode());
-		if(countycode!=null&&!"".equals(countycode)){
-			wpa = new WeatherPagerAdapter(getSupportFragmentManager(),position,countycode);
-		}else{
-			wpa = new WeatherPagerAdapter(getSupportFragmentManager());
-		}
+		wpa = new WeatherPagerAdapter(getSupportFragmentManager());
 		
 		vp.setAdapter(wpa);
 		setContentView(vp);
@@ -80,9 +75,6 @@ public class WeatherActivity extends SlidingFragmentActivity{
 		
 		vp.setCurrentItem(0);
 		getSlidingMenu().setTouchModeAbove(SlidingMenu.TOUCHMODE_FULLSCREEN);
-		
-		Intent intent = new Intent(this,AutoUpdateWeatherService.class);
-		startService(intent);
 	}
 	
 	@Override
@@ -128,7 +120,21 @@ public class WeatherActivity extends SlidingFragmentActivity{
         } else {  
             super.onBackPressed();  
         }  
-    }  
+    }
+	@Override
+	public void showWeather(String countyid) {
+		System.out.println("我得到了城市id:"+countyid+"现在是viewpager中的第"+vp.getCurrentItem()+"个view,共有"+wpa.getCount()+"个view");
+		int position = vp.getCurrentItem()+1;
+		WeatherFragment wf =  (WeatherFragment) wpa.getItem(vp.getCurrentItem());
+		wf.countycode = countyid;
+		wf.update_weather(countyid, "county");
+		//wpa.removeFragment(position);
+		//System.out.println("wpa.removeFragment(position); 共有"+wpa.getCount()+"个view");
+		//wpa.addFragment(position, new WeatherFragment(position,countyid));
+		//System.out.println("wpa.addFragment(position, new WeatherFragment(position)); 共有"+wpa.getCount()+"个view");
+		wpa.notifyDataSetChanged();//通知更新Fragment
+		menu.showContent();  
+	}  
 	
 	
 }

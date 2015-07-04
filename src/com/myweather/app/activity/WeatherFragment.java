@@ -9,29 +9,29 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
-import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
-import com.myweather.app.R;
-import com.myweather.app.util.HttpCallbackListener;
-import com.myweather.app.util.HttpUtil;
-import com.myweather.app.util.URLEncoderUtil;
-import com.myweather.app.util.Utility;
-
 import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.app.AlertDialog.Builder;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.myweather.app.R;
+import com.myweather.app.service.AutoUpdateWeatherService;
+import com.myweather.app.util.HttpCallbackListener;
+import com.myweather.app.util.HttpUtil;
+import com.myweather.app.util.URLEncoderUtil;
+import com.myweather.app.util.Utility;
 
 public class WeatherFragment extends Fragment{
 	/**
@@ -334,7 +334,8 @@ public class WeatherFragment extends Fragment{
 				
 				SharedPreferences sp = getActivity().getSharedPreferences(Utility.CITY_CONFIG+position, getActivity().MODE_PRIVATE);
 				update_weather(sp.getString("c1", ""),"weather");
-					
+				//Intent intent = new Intent(getActivity(),AutoUpdateWeatherService.class);
+				//getActivity().startService(intent);	
 			}
 		});
 		img_getdesc.setOnClickListener(new OnClickListener() {

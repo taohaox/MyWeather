@@ -3,7 +3,9 @@ package com.myweather.app.activity;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
@@ -35,6 +37,12 @@ public class ChooseAreaFragment extends ListFragment{
 	public static final int LEVEL_CITY=1;
 	public static final int LEVEL_COUNTY=2;
 	
+	
+	public interface HandlerChoose{
+		void showWeather(String countyid);
+	}
+	
+	private HandlerChoose mHandlerChoose;
 	private ListView listview;
 	private TextView title_text;
 	private ProgressDialog progressdialog;
@@ -81,20 +89,48 @@ public class ChooseAreaFragment extends ListFragment{
 	private ImageView back;
 	private View view;
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+		System.out.println("onCreateView被调用");
 		view = inflater.inflate(R.layout.choose_area, null);
 		return view;
 	}
 	
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
+		System.out.println("onActivityCreated被调用");
 		initView();
 		initListener();
 		queryProvinces();
 		
 		
 	}
-
 	
+	
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		System.out.println("onCreate被调用");
+	}
+
+	@Override
+	public void onAttach(Activity activity) {
+		super.onAttach(activity);
+		System.out.println("onAttach被调用");
+		mHandlerChoose = (HandlerChoose) activity;
+	}
+	
+	
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+		System.out.println("onDestroy被调用");
+	}
+
+	@Override
+	public void onPause() {
+		super.onPause();
+		System.out.println("onPause被调用");
+	}
+
 	/**
 	 * 初始化所有的视图,变量
 	 */
@@ -130,12 +166,15 @@ public class ChooseAreaFragment extends ListFragment{
 					selectedCity = cityList.get(position);
 					queryCounty();
 				}else if(currentLevel==LEVEL_COUNTY){
-					Intent intent = new Intent(getActivity(),WeatherActivity.class);
+					//Intent intent = new Intent(getActivity(),WeatherActivity.class);
 					String countycode =  countyList.get(position).getCountyCode();
-					intent.putExtra("countycode", countycode);
-					intent.putExtra("position", 1);
-					startActivity(intent);
-					getActivity().finish();
+					//intent.putExtra("countycode", countycode);
+					//intent.putExtra("position", 1);
+					//startActivity(intent);
+					//getActivity().finish();
+					mHandlerChoose.showWeather(countycode);
+					currentLevel = LEVEL_PROVINCE;
+					queryProvinces();
 					/*if (getActivity() instanceof WeatherActivity) {
 						WeatherActivity wa = (WeatherActivity) getActivity();
 						wa.wpa.removeFragment(position);
