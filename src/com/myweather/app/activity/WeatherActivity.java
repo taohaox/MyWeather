@@ -23,6 +23,7 @@ import com.jeremyfeinstein.slidingmenu.lib.app.SlidingFragmentActivity;
 import com.myweather.app.R;
 import com.myweather.app.activity.ChooseAreaFragment.HandlerChoose;
 import com.myweather.app.adapter.WeatherPagerAdapter;
+import com.myweather.app.customview.DotIndicatorView;
 import com.myweather.app.service.AutoUpdateWeatherService;
 import com.myweather.app.util.Utility;
 
@@ -47,6 +48,11 @@ public class WeatherActivity extends SlidingFragmentActivity implements HandlerC
 	 * 点击查看更多
 	 */
 	private ImageView img_listcity;
+	
+	/**
+	 * 自定义圆点指示器
+	 */
+	private DotIndicatorView dot;
 	/*private TextView big_after_tomorrow;
 	private TextView big_after_tomorrow_date;
 	private ImageView img_big_after_tomorrow;
@@ -128,8 +134,7 @@ img_update.setOnClickListener(new OnClickListener() {
 		wpa = new WeatherPagerAdapter(getSupportFragmentManager());
 		vp.setAdapter(wpa);
 		FrameLayout fl = new FrameLayout(this);
-		ImageView img = new ImageView(this);
-		img.setImageResource(R.drawable.more);
+		
 		
 		
 		LinearLayout bottom_menu = (LinearLayout) LayoutInflater.from(this).inflate(R.layout.bottom_menu, null);
@@ -141,7 +146,9 @@ img_update.setOnClickListener(new OnClickListener() {
 		
 		fl.addView(vp);
 		fl.addView(bottom_menu);
-		fl.addView(img);
+		
+		dot = new DotIndicatorView(this, null);
+		fl.addView(dot);
 		
 		//得到底部菜单在FrameLayout中的参数
 		bottom_menu = (LinearLayout) fl.findViewById(R.id.ll_bottom_menu);
@@ -169,10 +176,35 @@ img_update.setOnClickListener(new OnClickListener() {
 				switch (position) {
 				case 0:
 					getSlidingMenu().setTouchModeAbove(SlidingMenu.TOUCHMODE_NONE);
+					dot.setPosition(getPosition());
+					dot.postInvalidate();
 					break;
-				default:
+				case 1:
 					getSlidingMenu().setTouchModeAbove(SlidingMenu.TOUCHMODE_MARGIN);
+					dot.setPosition(getPosition());
+					dot.postInvalidate();
 					break;
+				case 2:
+					getSlidingMenu().setTouchModeAbove(SlidingMenu.TOUCHMODE_MARGIN);
+					dot.setPosition(getPosition());
+					dot.postInvalidate();
+					break;
+				case 3:
+					getSlidingMenu().setTouchModeAbove(SlidingMenu.TOUCHMODE_MARGIN);
+					dot.setPosition(getPosition());
+					dot.postInvalidate();
+					break;
+				case 4:
+					getSlidingMenu().setTouchModeAbove(SlidingMenu.TOUCHMODE_MARGIN);
+					dot.setPosition(getPosition());
+					dot.postInvalidate();
+					break;
+				case 5:
+					getSlidingMenu().setTouchModeAbove(SlidingMenu.TOUCHMODE_MARGIN);
+					dot.setPosition(getPosition());
+					dot.postInvalidate();
+					break;
+					
 				}
 			}
 
