@@ -7,6 +7,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -24,8 +25,19 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.location.Location;
+import android.location.LocationManager;
 import android.text.TextUtils;
+import android.widget.Toast;
 
+import com.baidu.mapapi.model.LatLng;
+import com.baidu.mapapi.search.core.SearchResult;
+import com.baidu.mapapi.search.geocode.GeoCodeOption;
+import com.baidu.mapapi.search.geocode.GeoCodeResult;
+import com.baidu.mapapi.search.geocode.GeoCoder;
+import com.baidu.mapapi.search.geocode.OnGetGeoCoderResultListener;
+import com.baidu.mapapi.search.geocode.ReverseGeoCodeOption;
+import com.baidu.mapapi.search.geocode.ReverseGeoCodeResult;
 import com.myweather.app.R;
 import com.myweather.app.db.MyWeatherDB;
 import com.myweather.app.model.City;
@@ -483,5 +495,31 @@ public class Utility {
 			e.printStackTrace();
 		}
 	}
-
+	
+	/**
+	 * 获取本地的位置信息
+	 */
+	public static Location getLocation(Context context){
+		LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+		List<String> list = locationManager.getProviders(true);
+		String provider = "";
+		if(list.contains(LocationManager.GPS_PROVIDER)){
+			provider = LocationManager.GPS_PROVIDER;
+		}else if(list.contains(LocationManager.NETWORK_PROVIDER)){
+			provider = LocationManager.NETWORK_PROVIDER;
+		}else{
+			Toast.makeText(context, "没有可用的位置提供器 "+list.size(), 0).show();
+			return null;
+		}
+		Location location = locationManager.getLastKnownLocation(provider);
+		return location;
+	}
+	
+	
+	public static void getCity(Context context,OnGetGeoCoderResultListener listener){
+		GeoCoder mSearch = GeoCoder.newInstance();
+		mSearch.setOnGetGeoCodeResultListener(listener);
+		Location location = getLocation(context);
+		mSearch.reverseGeoCode(new ReverseGeoCodeOption().location(new LatLng(location.getLatitude(), location.getLongitude())));  
+	}
 }

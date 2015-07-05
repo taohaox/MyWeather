@@ -1,7 +1,11 @@
 package com.myweather.app.activity;
 
+import java.util.List;
+
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
@@ -10,14 +14,14 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.Window;
 import android.view.View.OnClickListener;
+import android.view.Window;
 import android.widget.FrameLayout;
 import android.widget.FrameLayout.LayoutParams;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 
+import com.baidu.mapapi.SDKInitializer;
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 import com.jeremyfeinstein.slidingmenu.lib.app.SlidingFragmentActivity;
 import com.myweather.app.R;
@@ -72,13 +76,21 @@ public class WeatherActivity extends SlidingFragmentActivity implements HandlerC
 	public void onCreate(Bundle savedInstanceState){
 		super.onCreate(savedInstanceState);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
-		//setContentView(R.layout.weather_layout);
-		//setTitle("ViewPager");
+		//百度地图的api  在使用SDK各组件之前初始化context信息，传入ApplicationContext  
+        //注意该方法要再setContentView方法之前实现  
+		SDKInitializer.initialize(getApplicationContext());  
 		
-		 //初始化滑动菜单  
+		LocationManager location = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+		List<String> list = location.getProviders(true);
+		if(list.contains(LocationManager.GPS_PROVIDER)){
+			
+		}
+		
         initSlidingMenu();  
         initView();
         initListener();
+        
+        
 	}
 	private void initListener() {
 img_update.setOnClickListener(new OnClickListener() {

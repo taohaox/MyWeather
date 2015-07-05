@@ -18,6 +18,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -26,8 +27,12 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.baidu.mapapi.search.core.SearchResult;
+import com.baidu.mapapi.search.geocode.GeoCodeResult;
+import com.baidu.mapapi.search.geocode.OnGetGeoCoderResultListener;
+import com.baidu.mapapi.search.geocode.ReverseGeoCodeResult;
 import com.myweather.app.R;
-import com.myweather.app.service.AutoUpdateWeatherService;
+import com.myweather.app.util.CharacterParser;
 import com.myweather.app.util.HttpCallbackListener;
 import com.myweather.app.util.HttpUtil;
 import com.myweather.app.util.URLEncoderUtil;
@@ -127,6 +132,46 @@ public class WeatherFragment extends Fragment{
 		initView();
 		//String countycode = getActivity().getIntent().getStringExtra("countycode");
 		//System.out.println("countycode:"+countycode);
+		//利用百度地图定位
+		if(position==1){
+			Utility.getCity(getActivity(), new OnGetGeoCoderResultListener() {
+				
+				public void onGetGeoCodeResult(final GeoCodeResult result) {  
+			        if (result == null || result.error != SearchResult.ERRORNO.NO_ERROR) {  
+			            //没有检索到结果  
+			        	System.out.println("你当前所在的城市:()");
+			        }else{//获取地理编码结果  
+			        	getActivity().runOnUiThread(new Runnable() {
+							
+							@Override
+							public void run() {
+								System.out.println("你当前所在的城市:"+result.getAddress());
+								Toast.makeText(getActivity(), "你当前所在的城市:"+result.getAddress(), 0).show();
+							}
+						});
+			        }
+			        
+			    }  
+				
+				/**
+				 * 反向地理编码
+				 */
+			    @Override  
+			    public void onGetReverseGeoCodeResult(final ReverseGeoCodeResult result) {  
+			        if (result == null || result.error != SearchResult.ERRORNO.NO_ERROR) {  
+			            //没有找到检索结果  
+			        	System.out.println("你当前所在的城市:(onGetReverseGeoCodeResult)");
+			        }  else{ //获取反向地理编码结果  
+						Log.e("abc","city:"+CharacterParser.getInstance().getSelling(result.getAddressDetail().city) );
+						Toast.makeText(getActivity(), "你当前所在的城市:"+result.getAddress(), 0).show();
+						
+			        }
+			        
+			    }  
+			});
+		}
+		
+		
 		if("".equals(countycode)||countycode==null){
 			showWeatherInfo(position);
 		}else{
@@ -227,7 +272,7 @@ public class WeatherFragment extends Fragment{
 			String img4 = "n"+sp.getString("fb2", "");
 			img_tomorrow1.setImageResource(Utility.getImage(img3));
 			img_tomorrow2.setImageResource(Utility.getImage(img4));
-			tomorrow_temp.setText(sp.getString("fd2", "")+"~"+sp.getString("fc2", "")+"°C");
+			tomorrow_temp.setText(sp.getString("fc2", "")+"~"+sp.getString("fd2", "")+"°C");
 			
 			//第三天
 			c.add(Calendar.DATE, 1);
@@ -237,7 +282,7 @@ public class WeatherFragment extends Fragment{
 			String img6 = "n"+sp.getString("fb3", "");
 			img_after_tomorrow1.setImageResource(Utility.getImage(img5));
 			img_after_tomorrow2.setImageResource(Utility.getImage(img6));
-			after_tomorrow_temp.setText(sp.getString("fd3", "")+"~"+sp.getString("fc3", "")+"°C");
+			after_tomorrow_temp.setText(sp.getString("fc3", "")+"~"+sp.getString("fd3", "")+"°C");
 		}
 	}
 	/**

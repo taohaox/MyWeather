@@ -4,10 +4,13 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.SharedPreferences;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -30,6 +33,7 @@ public class DescWeatherInfoActivity extends Activity{
 	private ListView lv_desc;
 	private ImageView back;
 	private List<String> list;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -38,11 +42,12 @@ public class DescWeatherInfoActivity extends Activity{
 		weatherid = getIntent().getCharSequenceExtra("weatherid").toString();
 		position  = getIntent().getIntExtra("position", 0);
 		
+		
 		initView();
 		initData();
 		initListener();
 	}
-
+	
 	private void initListener() {
 		back.setOnClickListener(new OnClickListener() {
 			
@@ -102,6 +107,13 @@ public class DescWeatherInfoActivity extends Activity{
 		list.add("经纬度#"+c13+"  ,  " +c14);
 		list.add("海拔#"+c15);
 		list.add("雷达基站#"+c16);
+		Location location= Utility.getLocation(this);
+		if(location==null){
+			list.add("你所在的位置经纬度#无可用的定位器");
+		}else{
+			list.add("你位置的经纬度#"+Math.round((location.getLongitude()+0.5)*1000)/1000.0+" , "+Math.round((location.getLatitude()+0.5)*1000)/1000.0);
+		}
+		
 		lv_desc.setAdapter(new DescWeatherAdapter(this, list));
 	}
 
@@ -116,5 +128,9 @@ public class DescWeatherInfoActivity extends Activity{
 	@Override
 	public void onBackPressed() {
 		super.onBackPressed();
+	}
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
 	}
 }
