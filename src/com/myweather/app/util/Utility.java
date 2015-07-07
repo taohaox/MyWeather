@@ -28,16 +28,9 @@ import android.content.SharedPreferences.Editor;
 import android.location.Location;
 import android.location.LocationManager;
 import android.text.TextUtils;
+import android.util.Log;
 import android.widget.Toast;
 
-import com.baidu.mapapi.model.LatLng;
-import com.baidu.mapapi.search.core.SearchResult;
-import com.baidu.mapapi.search.geocode.GeoCodeOption;
-import com.baidu.mapapi.search.geocode.GeoCodeResult;
-import com.baidu.mapapi.search.geocode.GeoCoder;
-import com.baidu.mapapi.search.geocode.OnGetGeoCoderResultListener;
-import com.baidu.mapapi.search.geocode.ReverseGeoCodeOption;
-import com.baidu.mapapi.search.geocode.ReverseGeoCodeResult;
 import com.myweather.app.R;
 import com.myweather.app.db.MyWeatherDB;
 import com.myweather.app.model.City;
@@ -446,6 +439,37 @@ public class Utility {
 		}
 	}
 	/**
+	 * 用来返回url  即 weatherid
+	 * @param context
+	 * @param position
+	 * @param in
+	 */
+	public static String handleRealWeather(Context context,int position,File in,String py,String city){
+		DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance(); 
+		try {
+			DocumentBuilder builder = builderFactory.newDocumentBuilder();
+			Document document = builder.parse(in);
+			Element root = document.getDocumentElement();
+			NodeList nodelist = root.getElementsByTagName("city");
+			for(int i=0;i<nodelist.getLength();i++){
+				Element e = (Element) nodelist.item(i);
+				String cityname = e.getAttribute("cityname");
+				System.out.println(cityname);
+				if(cityname.equals(city)){
+					return e.getAttribute("url");
+				}
+			}
+			
+		} catch (ParserConfigurationException e) {
+			e.printStackTrace();
+		} catch (SAXException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return "";
+	}
+	/**
 	 * 保存实时天气到 REAL_WEATHER_CONFIG+position 文件中
 	 * @param temp2 
 	 * @param temp1 
@@ -480,17 +504,35 @@ public class Utility {
 	 */
 	public static void handlerPM2(Context context,int position,String response){
 		//获取可以往里面添加数据的sp
-		SharedPreferences sp = context.getSharedPreferences(REAL_WEATHER_CONFIG+position, context.MODE_APPEND);
+		SharedPreferences sp = context.getSharedPreferences(WEATHER_CONFIG+position, context.MODE_APPEND);
 		Editor editor = sp.edit();
 		
 		try {
-			JSONArray arr = new JSONArray(response);
+			/*JSONArray arr = new JSONArray(response);
 			JSONObject obj = arr.getJSONObject(0);
 			String pm2_5 = obj.getString("pm2_5");
 			String quality = obj.getString("quality");
 			editor.putString("pm2_5", pm2_5);
-			editor.putString("quality", quality);
-			editor.commit();
+			editor.putString("quality", quality);*/
+			
+			JSONObject obj = new JSONObject(response);
+			String err = obj.getString("errNum");
+			if(err.equals("0")){
+				JSONObject retData = obj.getJSONObject("retData");
+				String aqi = retData.getString("aqi");
+				String level = retData.getString("level");
+				String core = retData.getString("core");
+				
+				editor.putString("aqi", aqi);
+				editor.putString("level", level);
+				if(!core.equals("")){
+					editor.putString("core", core);
+				}
+				
+				Log.e("abc", "文件已保存 aqi:"+aqi+" level:"+level);
+				editor.commit();
+			}
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -514,12 +556,44 @@ public class Utility {
 		Location location = locationManager.getLastKnownLocation(provider);
 		return location;
 	}
-	
-	
-	public static void getCity(Context context,OnGetGeoCoderResultListener listener){
-		GeoCoder mSearch = GeoCoder.newInstance();
-		mSearch.setOnGetGeoCodeResultListener(listener);
-		Location location = getLocation(context);
-		mSearch.reverseGeoCode(new ReverseGeoCodeOption().location(new LatLng(location.getLatitude(), location.getLongitude())));  
+	/**
+	 * 用来处理访问百度api 返回回来的json
+	 * @param response 
+{
+    "status":"OK",
+    "result":{
+        "location":{
+            "lng":112.987,
+            "lat":28.199
+        },
+        "formatted_address":"湖南省长沙市芙蓉区东牌楼街3",
+        "business":"太平街口,黄兴路,司门口",
+        "addressComponent":{
+            "city":"长沙市",
+            "direction":"附近",
+            "distance":"14",
+            "district":"芙蓉区",
+            "province":"湖南省",
+            "street":"东牌楼街",
+            "street_number":"3"
+        },
+        "cityCode":158
+    }
+}
+	 * @return   返回城市名称
+	 */
+	public static String handlerLocationGetWeather(String response){
+		
+		try {
+			JSONObject obj = new JSONObject(response);
+			JSONObject addr= obj.getJSONObject("result").getJSONObject("addressComponent");
+			return addr.getString("city");
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return "";
 	}
+	
+	
 }

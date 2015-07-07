@@ -111,7 +111,7 @@ public class DescWeatherInfoActivity extends Activity{
 		if(location==null){
 			list.add("你所在的位置经纬度#无可用的定位器");
 		}else{
-			list.add("你位置的经纬度#"+Math.round((location.getLongitude()+0.5)*1000)/1000.0+" , "+Math.round((location.getLatitude()+0.5)*1000)/1000.0);
+			list.add("你位置的经纬度#"+Math.round((location.getLongitude()*1000))/1000.0+" , "+Math.round((location.getLatitude()*1000))/1000.0);
 		}
 		
 		lv_desc.setAdapter(new DescWeatherAdapter(this, list));

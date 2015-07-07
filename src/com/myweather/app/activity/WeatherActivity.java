@@ -21,7 +21,6 @@ import android.widget.FrameLayout.LayoutParams;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
-import com.baidu.mapapi.SDKInitializer;
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 import com.jeremyfeinstein.slidingmenu.lib.app.SlidingFragmentActivity;
 import com.myweather.app.R;
@@ -76,9 +75,6 @@ public class WeatherActivity extends SlidingFragmentActivity implements HandlerC
 	public void onCreate(Bundle savedInstanceState){
 		super.onCreate(savedInstanceState);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
-		//百度地图的api  在使用SDK各组件之前初始化context信息，传入ApplicationContext  
-        //注意该方法要再setContentView方法之前实现  
-		SDKInitializer.initialize(getApplicationContext());  
 		
 		LocationManager location = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 		List<String> list = location.getProviders(true);
@@ -93,14 +89,20 @@ public class WeatherActivity extends SlidingFragmentActivity implements HandlerC
         
 	}
 	private void initListener() {
-img_update.setOnClickListener(new OnClickListener() {
+		img_update.setOnClickListener(new OnClickListener() {
 			
 			@Override
 			public void onClick(View v) {
 				//pb_update.setProgress(0);
 				//Toast.makeText(WeatherActivity.this, "开始更新天气", 0).show();
 				WeatherFragment wf =  (WeatherFragment) wpa.getItem(vp.getCurrentItem());
-				wf.update_weather(getC1(),"weather");
+				if(vp.getCurrentItem()==0){
+					wf.location_updateweather();
+				}else{
+					wf.update_weather(getC1(),"weather");
+				}
+				
+				//启动服务,定时更新天气 然而并没有什么卵用..
 				Intent intent = new Intent(WeatherActivity.this,AutoUpdateWeatherService.class);
 				startService(intent);	
 			}

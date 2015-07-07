@@ -5,17 +5,17 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
-import android.app.AlertDialog;
-import android.app.AlertDialog.Builder;
 import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -27,10 +27,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.baidu.mapapi.search.core.SearchResult;
-import com.baidu.mapapi.search.geocode.GeoCodeResult;
-import com.baidu.mapapi.search.geocode.OnGetGeoCoderResultListener;
-import com.baidu.mapapi.search.geocode.ReverseGeoCodeResult;
 import com.myweather.app.R;
 import com.myweather.app.util.CharacterParser;
 import com.myweather.app.util.HttpCallbackListener;
@@ -130,48 +126,6 @@ public class WeatherFragment extends Fragment{
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
 		initView();
-		//String countycode = getActivity().getIntent().getStringExtra("countycode");
-		//System.out.println("countycode:"+countycode);
-		//利用百度地图定位
-		if(position==1){
-			Utility.getCity(getActivity(), new OnGetGeoCoderResultListener() {
-				
-				public void onGetGeoCodeResult(final GeoCodeResult result) {  
-			        if (result == null || result.error != SearchResult.ERRORNO.NO_ERROR) {  
-			            //没有检索到结果  
-			        	System.out.println("你当前所在的城市:()");
-			        }else{//获取地理编码结果  
-			        	getActivity().runOnUiThread(new Runnable() {
-							
-							@Override
-							public void run() {
-								System.out.println("你当前所在的城市:"+result.getAddress());
-								Toast.makeText(getActivity(), "你当前所在的城市:"+result.getAddress(), 0).show();
-							}
-						});
-			        }
-			        
-			    }  
-				
-				/**
-				 * 反向地理编码
-				 */
-			    @Override  
-			    public void onGetReverseGeoCodeResult(final ReverseGeoCodeResult result) {  
-			        if (result == null || result.error != SearchResult.ERRORNO.NO_ERROR) {  
-			            //没有找到检索结果  
-			        	System.out.println("你当前所在的城市:(onGetReverseGeoCodeResult)");
-			        }  else{ //获取反向地理编码结果  
-						Log.e("abc","city:"+CharacterParser.getInstance().getSelling(result.getAddressDetail().city) );
-						Toast.makeText(getActivity(), "你当前所在的城市:"+result.getAddress(), 0).show();
-						
-			        }
-			        
-			    }  
-			});
-		}
-		
-		
 		if("".equals(countycode)||countycode==null){
 			showWeatherInfo(position);
 		}else{
@@ -186,18 +140,27 @@ public class WeatherFragment extends Fragment{
 		outState.putInt("position", position);
 	}
 	public void update_weather(String countycode,String type){
-		update_time.setText("同步中...");
+		getActivity().runOnUiThread(new Runnable() {
+			
+			@Override
+			public void run() {
+				update_time.setText("同步中...");
+				
+			}
+		});
 		queryWeatherBycountycode(countycode,type);
+		
+		
 	}
 	/**
 	 * 从本地获取 天气信息文件  得到的数据赋值到各个控件
 	 */
-	private void showWeatherInfo(int position) {
+	private void showWeatherInfo(final int position) {
 		SharedPreferences sp = getActivity().getSharedPreferences(Utility.CITY_CONFIG+position, getActivity().MODE_PRIVATE);
 		c1 = sp.getString("c1", "");
 		if(c1.equals("")){
 			if(position==1){
-				AlertDialog.Builder builder = new Builder(getActivity());
+				/*AlertDialog.Builder builder = new Builder(getActivity());
 				builder.setTitle("提示");
 				builder.setMessage("由于手机定位功能尚未开发,所以需要您自己指定您所在的城市,为您带来的不便,我深感抱歉!");
 				builder.setNegativeButton("OK", new DialogInterface.OnClickListener() {
@@ -207,7 +170,9 @@ public class WeatherFragment extends Fragment{
 					}
 				}
 				);
-				builder.show();
+				builder.show();*/
+				location_updateweather();
+				
 			}else if(position==2){
 				update_weather("010101","county");//bj
 			}else if(position==3){
@@ -230,16 +195,14 @@ public class WeatherFragment extends Fragment{
 			String temNow = sp.getString("temNow", "");  //描述
 			String stateDetailed = sp.getString("stateDetailed", "");
 			String current_time = sp.getString("current_time", "");
-			String quality = sp.getString("quality", "");
-			String pm = sp.getString("pm2_5", "");
+			
 			temp_desc.setText(stateDetailed);
 			wind_desc.setText(sp.getString("windState", ""));
 			temp_range.setText(temp1+"/"+temp2+"°C");
 			week_today.setText(Utility.getTodayOfWeek(new Date()));
 			update_time.setText(Utility.getUpdate_time(current_time));
 			real_time_temp.setText(temNow);
-			pm2_5.setText("PM2.5 "+pm);
-			air.setText("空气"+quality);
+			
 			
 			SimpleDateFormat sf = new SimpleDateFormat("M月dd日");
 			Date date = new Date();
@@ -248,14 +211,24 @@ public class WeatherFragment extends Fragment{
 			Calendar c = Calendar.getInstance();
 			c.setTime(new Date());
 			
-			
-			getActivity();
 			//拿到该城市未来三天的天气信息
 			sp = getActivity().getSharedPreferences(Utility.WEATHER_CONFIG+position, Context.MODE_PRIVATE);
+			
+			String level = sp.getString("level", "");
+			String aqi = sp.getString("aqi", "");
+			String core = sp.getString("core", "");
+			if("".equals(core)){
+				pm2_5.setText("aqi:"+aqi+" 无主要污染物");
+			}else{
+				pm2_5.setText("aqi:"+aqi+" 主要污染物:"+core);
+			}
+			
+			air.setText("空气"+level);
+			
 			//当天
 			today.setText("今天");
 			today_date.setText(sf.format(new Date()));
-			String img1 = "d"+sp.getString("fa1", "");
+			String img1 = "d"+sp.getString("fa1", "99");
 			String img2 = "n"+sp.getString("fb1", "");
 			
 			
@@ -285,6 +258,36 @@ public class WeatherFragment extends Fragment{
 			after_tomorrow_temp.setText(sp.getString("fc3", "")+"~"+sp.getString("fd3", "")+"°C");
 		}
 	}
+	public void location_updateweather() {
+		update_time.setText("同步中...");
+		Location location = Utility.getLocation(getActivity());
+		String address = "http://api.map.baidu.com/geocoder?location="+location.getLatitude()+","+location.getLongitude()+"&output=json&key=8cIYigmRBuU8IcquWLHvSAIB";
+		HttpUtil.sendHttpRequest(address, new HttpCallbackListener() {
+			
+			@Override
+			public void onFinish(String response) {
+				String city = Utility.handlerLocationGetWeather(response);
+				String city1 = "";
+				if(city.equals("")){
+					Toast.makeText(getActivity(), "读取位置信息错误", 0).show();
+					return;
+				}
+	        	if(city.contains("市")){
+	        		city1 = city.substring(0, city.indexOf("市"));
+	        	}
+	        	String py = CharacterParser.getInstance().getSelling(city1);
+				Log.e("abc","city:"+CharacterParser.getInstance().getSelling(city1) );
+				update_real_weather(position,py,city);
+			}
+			
+			@Override
+			public void onError(Exception e) {
+				// TODO Auto-generated method stub
+				
+			}
+		});
+	}
+
 	/**
 	 * 访问服务器  获取返回数据
 	 * @param code
@@ -296,30 +299,27 @@ public class WeatherFragment extends Fragment{
 		
 		//获取灰常详细的天气信息  
 		//http://m.weather.com.cn/atad/101010100.html
+		update_time.setText("同步中...");
 		if("county".equals(type)){
-			update_time.setText("同步中...");
 			String address = "http://www.weather.com.cn/data/list3/city"+code+".xml";
 			HttpUtil.sendHttpRequest(address,new HttpCallbackListener() {
 				
 				@Override
-				public void onFinish(String response,InputStream in) {
+				public void onFinish(String response) {
 					String strs[] = response.split("\\|");
 					queryWeatherBycountycode(strs[1],"weather");
 				}
 				
 				@Override
 				public void onError(Exception e) {
-					Toast.makeText(getActivity(), e.getMessage(), 0).show();
 					e.printStackTrace();
 				}
 			});
 		}else if("weather".equals(type)){
-			//String address = "http://www.weather.com.cn/data/cityinfo/"+code+".html";
-			//String address = "http://m.weather.com.cn/atad/"+code+".html";
 			HttpUtil.sendHttpRequest(URLEncoderUtil.getUrlEncoder(code, URLEncoderUtil.FORECAST_V),new HttpCallbackListener() {
 				
 				@Override
-				public void onFinish(String response,InputStream in) {
+				public void onFinish(String response) {
 					Utility.handleWeatherResponse(getActivity(), response,position);
 						
 					update_real_weather(position);
@@ -339,11 +339,12 @@ public class WeatherFragment extends Fragment{
 		SharedPreferences sp = getActivity().getSharedPreferences(Utility.CITY_CONFIG+position, getActivity().MODE_PRIVATE);
 		final String url = sp.getString("c1", ""); //c1为天气编号   是即将返回的xml中的url属性
 		final String code = sp.getString("c4", "");
+		final String pmcode = sp.getString("c5", "");
 		String httpaddr = "http://flash.weather.com.cn/wmaps/xml/"+code+".xml";
 		HttpUtil.sendHttpRequest(httpaddr, new HttpCallbackListener() {
 			
 			@Override
-			public void onFinish(String response,InputStream in) {
+			public void onFinish(String response) {
 				File file = new File(getActivity().getApplication().getFilesDir(),"xml");
 				try {
 					BufferedWriter bf = new BufferedWriter(new FileWriter(file));
@@ -354,7 +355,39 @@ public class WeatherFragment extends Fragment{
 					e.printStackTrace();
 				} 
 				Utility.handleRealWeather(getActivity(),url,position,file);
-				update_pm2(position, code);
+				
+				update_pm2(position, pmcode);
+			}
+			
+			@Override
+			public void onError(Exception e) {
+				e.printStackTrace();
+			}
+		});
+	}
+	/**
+	 * 定位的时候先调用更新实时天气的方法 用来获取weatherid 
+	 * 之后将会在方法里调用 update_weather(weatherid, "weather") 走正常流程
+	 * @param position  第几座城市
+	 * @param py     城市的名称  (拼音)
+	 */
+	public void update_real_weather(final int position,final String py,final String city){
+		String httpaddr = "http://flash.weather.com.cn/wmaps/xml/"+py+".xml";
+		HttpUtil.sendHttpRequest(httpaddr, new HttpCallbackListener() {
+			
+			@Override
+			public void onFinish(String response) {
+				File file = new File(getActivity().getApplication().getFilesDir(),"xml");
+				try {
+					BufferedWriter bf = new BufferedWriter(new FileWriter(file));
+					response = "<?xml version=\"1.0\" ?>"+response;
+					bf.write(response);
+					bf.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				} 
+				String weatherid = Utility.handleRealWeather(getActivity(),position,file,py,city);
+				update_weather(weatherid, "weather");
 			}
 			
 			@Override
@@ -364,26 +397,33 @@ public class WeatherFragment extends Fragment{
 		});
 	}
 	public void update_pm2(final int position,String city){
-		String address = "http://www.pm25.in/api/querys/pm2_5.json?city="+city+"&token=5j1znBVAsnSf5xQyNQyq";
-		HttpUtil.sendHttpRequest(address, new HttpCallbackListener() {
-			
-			@Override
-			public void onFinish(String response, InputStream in) {
-				Utility.handlerPM2(getActivity(), position, response);
-				getActivity().runOnUiThread(new Runnable() {
-					
-					@Override
-					public void run() {
-						showWeatherInfo(position);
-					}
-				});
-			}
-			
-			@Override
-			public void onError(Exception e) {
-				e.printStackTrace();
-			}
-		});
+		String address;
+		try {
+			address = "http://apis.baidu.com/apistore/aqiservice/aqi?city="+URLEncoder.encode(city,"utf-8");
+			HttpUtil.sendHttpRequestByBaiduAPI(address, new HttpCallbackListener() {
+				
+				@Override
+				public void onFinish(String response) {
+					Utility.handlerPM2(getActivity(), position, response);
+					getActivity().runOnUiThread(new Runnable() {
+						
+						@Override
+						public void run() {
+							showWeatherInfo(position);
+						}
+					});
+				}
+				
+				@Override
+				public void onError(Exception e) {
+					e.printStackTrace();
+				}
+			});
+		} catch (UnsupportedEncodingException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
 	}
 	/**
 	 * 初始化各种监听事件

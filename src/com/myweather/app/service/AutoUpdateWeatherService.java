@@ -58,7 +58,7 @@ public class AutoUpdateWeatherService extends Service{
 			if(code!=""){
 				HttpUtil.sendHttpRequest(URLEncoderUtil.getUrlEncoder(code, URLEncoderUtil.FORECAST_V),new HttpCallbackListener() {
 					@Override
-					public void onFinish(String response,InputStream in) {
+					public void onFinish(String response) {
 						Utility.handleWeatherResponse(getApplicationContext(), response,position);
 						update_real_weather(position);
 						
@@ -81,7 +81,7 @@ public class AutoUpdateWeatherService extends Service{
 		HttpUtil.sendHttpRequest(httpaddr, new HttpCallbackListener() {
 			
 			@Override
-			public void onFinish(String response,InputStream in) {
+			public void onFinish(String response) {
 				File file = new File(getFilesDir(),"xml");
 				try {
 					BufferedWriter bf = new BufferedWriter(new FileWriter(file));

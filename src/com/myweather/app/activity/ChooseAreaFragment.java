@@ -261,7 +261,7 @@ public class ChooseAreaFragment extends ListFragment{
 		HttpUtil.sendHttpRequest(address, new HttpCallbackListener() {
 			boolean result = false;
 			@Override
-			public void onFinish(String response,InputStream in) {
+			public void onFinish(String response) {
 				if(code!=null){
 					result = Utility.handleResponse(mDB, response, Integer.parseInt(code));
 				}else{
