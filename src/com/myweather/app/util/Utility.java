@@ -421,6 +421,15 @@ public class Utility {
 					String temp2 = e.getAttribute("tem2");
 					String stateDetailed = e.getAttribute("stateDetailed");
 					String temNow = e.getAttribute("temNow");
+					if(temNow.equals("暂无实况")){
+						Element f = null;
+						if(i+1<nodelist.getLength()){
+							f = (Element) nodelist.item(i+1);
+						}else{
+							f = (Element) nodelist.item(i-11);
+						}
+						temNow = f.getAttribute("temNow");
+					}
 					String windState = e.getAttribute("windState");
 					String windDir = e.getAttribute("windDir");
 					String windPower = e.getAttribute("windPower");
@@ -541,8 +550,7 @@ public class Utility {
 	/**
 	 * 获取本地的位置信息
 	 */
-	public static Location getLocation(Context context){
-		LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+	public static Location getLocation(Context context,LocationManager locationManager){
 		List<String> list = locationManager.getProviders(true);
 		String provider = "";
 		if(list.contains(LocationManager.GPS_PROVIDER)){
@@ -551,9 +559,11 @@ public class Utility {
 			provider = LocationManager.NETWORK_PROVIDER;
 		}else{
 			Toast.makeText(context, "没有可用的位置提供器 "+list.size(), 0).show();
-			return null;
 		}
 		Location location = locationManager.getLastKnownLocation(provider);
+		if(location==null){
+			location = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+		}
 		return location;
 	}
 	/**

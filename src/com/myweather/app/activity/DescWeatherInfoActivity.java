@@ -107,7 +107,7 @@ public class DescWeatherInfoActivity extends Activity{
 		list.add("经纬度#"+c13+"  ,  " +c14);
 		list.add("海拔#"+c15);
 		list.add("雷达基站#"+c16);
-		Location location= Utility.getLocation(this);
+		Location location= Utility.getLocation(this,WeatherFragment.locationManager);
 		if(location==null){
 			list.add("你所在的位置经纬度#无可用的定位器");
 		}else{
