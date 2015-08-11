@@ -235,7 +235,7 @@ public class WeatherFragment extends Fragment{
 			
 			temp_desc.setText(stateDetailed);
 			wind_desc.setText(sp.getString("windState", ""));
-			temp_range.setText(temp2+"/"+temp1+"°C");
+			
 			week_today.setText(Utility.getTodayOfWeek(new Date()));
 			update_time.setText(Utility.getUpdate_time(current_time));
 			
@@ -277,8 +277,8 @@ public class WeatherFragment extends Fragment{
 			
 			img_today1.setImageResource(Utility.getImage(img1));
 			img_today2.setImageResource(Utility.getImage(img2));
-			temp.setText(temp2+"~"+temp1+"°C");
-			
+			temp.setText(sp.getString("fc1", "")+"~"+sp.getString("fd1", "")+"°C");
+			temp_range.setText(sp.getString("fc1", "")+"/"+sp.getString("fd1", "")+"°C");
 			//第二天
 			c.add(Calendar.DATE, 1);
 			tomorrow.setText(Utility.getTodayOfWeek(c.getTime()));
@@ -310,6 +310,7 @@ public class WeatherFragment extends Fragment{
 			update_weather(sp.getString("c1", ""), "weather");
 		}else{
 			String address = "http://api.map.baidu.com/geocoder?location="+location.getLatitude()+","+location.getLongitude()+"&output=json&key=8cIYigmRBuU8IcquWLHvSAIB";
+			Log.e("abc", address);
 			HttpUtil.sendHttpRequest(address, new HttpCallbackListener() {
 				
 				@Override
@@ -324,7 +325,7 @@ public class WeatherFragment extends Fragment{
 		        		city1 = city.substring(0, city.indexOf("市"));
 		        	}
 		        	String py = CharacterParser.getInstance().getSelling(city1);
-					Log.e("abc","city:"+CharacterParser.getInstance().getSelling(city1) );
+					Log.e("abc","city:"+city1+CharacterParser.getInstance().getSelling(city1) );
 					update_real_weather(position,py,city);
 				}
 				

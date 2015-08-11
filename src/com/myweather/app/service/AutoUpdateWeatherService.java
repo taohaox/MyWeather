@@ -50,6 +50,8 @@ public class AutoUpdateWeatherService extends Service{
 		Intent i = new Intent(this,AlarmReceiver.class);
 		PendingIntent pd = PendingIntent.getBroadcast(this, 0, i, 0);
 		am.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAtTime, pd);
+		flags = START_STICKY;//进程被kill后 会再次尝试重新创建
+		
 		return super.onStartCommand(intent, flags, startId);
 	}
 	public  void updateWeather(final int position) {
@@ -100,5 +102,11 @@ public class AutoUpdateWeatherService extends Service{
 			}
 		});
 	}
-
+	@Override
+	public void onDestroy() {
+		stopForeground(true);
+		Intent i = new Intent(this,AlarmReceiver.class);
+		sendBroadcast(i);
+		super.onDestroy();
+	}
 }

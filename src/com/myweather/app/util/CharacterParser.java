@@ -157,6 +157,9 @@ public class CharacterParser {
 			for (int i = (pyvalue.length - 1); i >= 0; i--) {
 				if (pyvalue[i] <= ascii) {
 					result = pystr[i];
+					if(ascii==-9254){
+						result = "zhen";
+					}
 					break;
 				}
 			}
